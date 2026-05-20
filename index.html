@@ -25,9 +25,12 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useMemo } = React;
+const { useState, useMemo, useEffect } = React;
 
-const initialData = [
+const STORAGE_KEY = "bill_summary_data";
+const STORAGE_ID  = "bill_summary_nextid";
+
+const defaultData = [
   { id:1,  date:"6/1/69",  amount:15000.00, deduct:0, description:"ค่าล้อสัมภาระ ปี 68",                   category:"ค้างปี 68" },
   { id:2,  date:"16/1/69", amount:1926.00,  deduct:0, description:"กา. คุณหมาเครื่องตู้หน้า 2H",           category:"ค่าซ่อม" },
   { id:3,  date:"16/1/69", amount:153.00,   deduct:0, description:"สร. บ้านคนงาน",                         category:"บ้านคนงาน" },
@@ -40,6 +43,19 @@ const initialData = [
   { id:10, date:"13/2/69", amount:2568.00,  deduct:0, description:"สร. Net",                                category:"ค่าเน็ต" },
   { id:11, date:"21/2/69", amount:3010.00,  deduct:0, description:"ค่าน้ำ + ไฟ",                           category:"สาธารณูปโภค" },
 ];
+
+function loadData(){
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : defaultData;
+  } catch(e){ return defaultData; }
+}
+function loadNextId(){
+  try {
+    const saved = localStorage.getItem(STORAGE_ID);
+    return saved ? parseInt(saved) : 12;
+  } catch(e){ return 12; }
+}
 
 const catColor = {
   "ค้างปี 68":"#f97316","ค่าซ่อม":"#ef4444","บ้านคนงาน":"#8b5cf6",
@@ -56,8 +72,6 @@ function parseYear(d){ return parseInt(d.split("/")[2]); }
 function exportPDF(data, title) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:"landscape", unit:"mm", format:"a4" });
-
-  // Header
   doc.setFillColor(31,78,121);
   doc.rect(0,0,297,22,"F");
   doc.setTextColor(255,255,255);
@@ -65,69 +79,62 @@ function exportPDF(data, title) {
   doc.text(title, 14, 10);
   doc.setFontSize(10);
   doc.text("ใบสรุปค่าใช้จ่ายเพื่อเบิกกับบริษัท", 14, 17);
-
   const tA = data.reduce((s,r)=>s+Number(r.amount),0);
   const tD = data.reduce((s,r)=>s+Number(r.deduct||0),0);
-  const tN = tA - tD;
-
-  // Table
+  const tN = tA-tD;
   doc.autoTable({
-    startY: 28,
-    head: [["#","วันที่","รายการ","หมวด","ยอดเบิก (บาท)","หักคืน สร. (บาท)","ยอดสุทธิ (บาท)"]],
-    body: [
-      ...data.map((r,i)=>[
-        i+1, r.date, r.description, r.category,
-        fmt(r.amount),
-        Number(r.deduct||0)>0 ? fmt(r.deduct) : "-",
-        fmt(Number(r.amount)-Number(r.deduct||0))
-      ]),
-      ["","","","รวมทั้งสิ้น", fmt(tA), tD>0?fmt(tD):"-", fmt(tN)]
+    startY:28,
+    head:[["#","วันที่","รายการ","หมวด","ยอดเบิก (บาท)","หักคืน สร. (บาท)","ยอดสุทธิ (บาท)"]],
+    body:[
+      ...data.map((r,i)=>[i+1,r.date,r.description,r.category,fmt(r.amount),Number(r.deduct||0)>0?fmt(r.deduct):"-",fmt(Number(r.amount)-Number(r.deduct||0))]),
+      ["","","","รวมทั้งสิ้น",fmt(tA),tD>0?fmt(tD):"-",fmt(tN)]
     ],
-    styles:{ font:"helvetica", fontSize:9, cellPadding:3 },
-    headStyles:{ fillColor:[46,117,182], textColor:255, fontStyle:"bold" },
-    alternateRowStyles:{ fillColor:[235,244,255] },
-    columnStyles:{
-      0:{cellWidth:8, halign:"center"},
-      1:{cellWidth:20},
-      2:{cellWidth:80},
-      3:{cellWidth:28},
-      4:{cellWidth:30, halign:"right"},
-      5:{cellWidth:32, halign:"right"},
-      6:{cellWidth:32, halign:"right"},
-    },
-    foot:[],
-    didParseCell: (d)=>{
-      if(d.row.index === data.length){
-        d.cell.styles.fontStyle = "bold";
-        d.cell.styles.fillColor = [189,215,238];
-        d.cell.styles.textColor = [0,0,0];
-      }
-    }
+    styles:{font:"helvetica",fontSize:9,cellPadding:3},
+    headStyles:{fillColor:[46,117,182],textColor:255,fontStyle:"bold"},
+    alternateRowStyles:{fillColor:[235,244,255]},
+    columnStyles:{0:{cellWidth:8,halign:"center"},1:{cellWidth:20},2:{cellWidth:80},3:{cellWidth:28},4:{cellWidth:30,halign:"right"},5:{cellWidth:32,halign:"right"},6:{cellWidth:32,halign:"right"}},
+    didParseCell:(d)=>{ if(d.row.index===data.length){d.cell.styles.fontStyle="bold";d.cell.styles.fillColor=[189,215,238];d.cell.styles.textColor=[0,0,0];} }
   });
-
-  // Footer
   const pageH = doc.internal.pageSize.height;
   doc.setTextColor(120,120,120);
   doc.setFontSize(8);
-  doc.text(`พิมพ์เมื่อ: ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}`, 14, pageH-6);
-  doc.text(`ยอดสุทธิรวม: ${fmt(tN)} บาท`, 180, pageH-6);
-
+  doc.text(`พิมพ์เมื่อ: ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}`,14,pageH-6);
+  doc.text(`ยอดสุทธิรวม: ${fmt(tN)} บาท`,180,pageH-6);
   doc.save(`${title}.pdf`);
 }
 
 function App(){
-  const [rows,setRows]           = useState(initialData);
-  const [nextId,setNextId]       = useState(12);
+  const [rows,setRows]           = useState(loadData);
+  const [nextId,setNextId]       = useState(loadNextId);
   const [showModal,setShowModal] = useState(false);
   const [editRow,setEditRow]     = useState(null);
   const [form,setForm]           = useState(emptyForm);
   const [deleteId,setDeleteId]   = useState(null);
   const [view,setView]           = useState("summary");
+  const [toast,setToast]         = useState("");
+
+  // บันทึกลง localStorage ทุกครั้งที่ rows เปลี่ยน
+  useEffect(()=>{
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+    } catch(e){}
+  },[rows]);
+
+  useEffect(()=>{
+    try {
+      localStorage.setItem(STORAGE_ID, String(nextId));
+    } catch(e){}
+  },[nextId]);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(()=>setToast(""),2500);
+  };
 
   const monthGroups = useMemo(()=>{
     const map = {};
     rows.forEach(r=>{
-      const key = `${parseMonth(r.date)}/${parseYear(r.date)}`;
+      const key=`${parseMonth(r.date)}/${parseYear(r.date)}`;
       if(!map[key]) map[key]={month:parseMonth(r.date),year:parseYear(r.date),key,rows:[]};
       map[key].rows.push(r);
     });
@@ -144,28 +151,35 @@ function App(){
   const saveForm = ()=>{
     if(!form.date||!form.amount||!form.description) return;
     if(editRow!==null){
-      setRows(rows.map(r=>r.id===editRow?{...r,...form,amount:Number(form.amount),deduct:Number(form.deduct||0)}:r));
+      setRows(prev=>prev.map(r=>r.id===editRow?{...r,...form,amount:Number(form.amount),deduct:Number(form.deduct||0)}:r));
+      showToast("✅ แก้ไขรายการเรียบร้อย");
     } else {
-      setRows([...rows,{id:nextId,...form,amount:Number(form.amount),deduct:Number(form.deduct||0)}]);
-      setNextId(nextId+1);
+      const newRow = {id:nextId,...form,amount:Number(form.amount),deduct:Number(form.deduct||0)};
+      setRows(prev=>[...prev,newRow]);
+      setNextId(prev=>prev+1);
+      showToast("✅ เพิ่มรายการเรียบร้อย");
     }
     setShowModal(false);
+  };
+
+  const doDelete = ()=>{
+    setRows(prev=>prev.filter(r=>r.id!==deleteId));
+    setDeleteId(null);
+    showToast("🗑️ ลบรายการเรียบร้อย");
   };
 
   const currentMonthKey   = view.startsWith("month:") ? view.replace("month:","") : null;
   const currentMonthGroup = currentMonthKey ? monthGroups.find(g=>g.key===currentMonthKey) : null;
   const detailRows        = currentMonthGroup ? currentMonthGroup.rows : rows;
-
   const colGrid = "36px 78px 1fr 88px 88px 78px 78px 60px";
 
   function RowTable({data, pdfTitle}){
-    const tA = data.reduce((s,r)=>s+Number(r.amount),0);
-    const tD = data.reduce((s,r)=>s+Number(r.deduct||0),0);
-    const tN = tA-tD;
+    const tA=data.reduce((s,r)=>s+Number(r.amount),0);
+    const tD=data.reduce((s,r)=>s+Number(r.deduct||0),0);
+    const tN=tA-tD;
     return(<>
-      {/* Export btn */}
       <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
-        <button onClick={()=>exportPDF(data, pdfTitle)}
+        <button onClick={()=>exportPDF(data,pdfTitle)}
           style={{background:"linear-gradient(135deg,#10b981,#059669)",color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 16px #10b98140"}}>
           📄 Export PDF
         </button>
@@ -212,6 +226,13 @@ function App(){
     <div style={{minHeight:"100vh",padding:"20px 12px"}}>
       <div style={{maxWidth:920,margin:"0 auto"}}>
 
+        {/* Toast */}
+        {toast&&(
+          <div style={{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",background:"#1e293b",color:"#34d399",border:"1px solid #34d39944",borderRadius:12,padding:"10px 24px",fontSize:14,fontWeight:600,zIndex:999,boxShadow:"0 8px 30px rgba(0,0,0,0.4)"}}>
+            {toast}
+          </div>
+        )}
+
         {/* Header */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -252,7 +273,6 @@ function App(){
               </div>
             ))}
           </div>
-
           <div style={{color:"#64748b",fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>สรุปรายเดือน — กดเพื่อดูรายละเอียด</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14,marginBottom:20}}>
             {monthGroups.map(g=>{
@@ -302,7 +322,6 @@ function App(){
           </button>
         </>)}
 
-        {/* DETAIL / ALL VIEW */}
         {(view.startsWith("month:")||view==="all")&&(
           <RowTable
             data={view==="all"?rows:detailRows}
@@ -353,7 +372,7 @@ function App(){
             <p style={{color:"#64748b",fontSize:12,marginBottom:16}}>ไม่สามารถเรียกคืนได้</p>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setDeleteId(null)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>ยกเลิก</button>
-              <button onClick={()=>{setRows(rows.filter(r=>r.id!==deleteId));setDeleteId(null)}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>ลบ</button>
+              <button onClick={doDelete} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>ลบ</button>
             </div>
           </div>
         </div>
