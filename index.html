@@ -149,7 +149,7 @@ function App(){
   const openEdit = r=>{setForm({date:r.date,amount:r.amount,deduct:r.deduct||0,description:r.description,category:r.category});setEditRow(r.id);setShowModal(true)};
 
   const saveForm = ()=>{
-    if(!form.date||!form.amount||!form.description) return;
+    if(!form.date||(!form.amount&&!form.deduct)||!form.description) return;
     if(editRow!==null){
       setRows(prev=>prev.map(r=>r.id===editRow?{...r,...form,amount:Number(form.amount),deduct:Number(form.deduct||0)}:r));
       showToast("✅ แก้ไขรายการเรียบร้อย");
