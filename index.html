@@ -8,6 +8,8 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#0f2027 100%);min-height:100vh;font-family:'Sarabun',sans-serif}
@@ -16,9 +18,8 @@
   ::-webkit-scrollbar-track{background:#1e293b}
   ::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
   .row-item:hover{background:rgba(59,130,246,0.08)!important}
-  .tab-btn{transition:all .2s}
-  .month-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
   .month-card{transition:all .2s;cursor:pointer}
+  .month-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.3)}
 </style>
 </head>
 <body>
@@ -47,45 +48,95 @@ const catColor = {
 const categories = Object.keys(catColor);
 const fmt = n => Number(n).toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2});
 const emptyForm = {date:"",amount:"",deduct:"",description:"",category:"อื่นๆ"};
-
-const MONTH_TH = ["","ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 const MONTH_FULL = ["","มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 
-function parseMonth(dateStr) {
-  const parts = dateStr.split("/");
-  return parseInt(parts[1]);
-}
-function parseYear(dateStr) {
-  const parts = dateStr.split("/");
-  return parseInt(parts[2]);
+function parseMonth(d){ return parseInt(d.split("/")[1]); }
+function parseYear(d){ return parseInt(d.split("/")[2]); }
+
+function exportPDF(data, title) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"landscape", unit:"mm", format:"a4" });
+
+  // Header
+  doc.setFillColor(31,78,121);
+  doc.rect(0,0,297,22,"F");
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);
+  doc.text(title, 14, 10);
+  doc.setFontSize(10);
+  doc.text("ใบสรุปค่าใช้จ่ายเพื่อเบิกกับบริษัท", 14, 17);
+
+  const tA = data.reduce((s,r)=>s+Number(r.amount),0);
+  const tD = data.reduce((s,r)=>s+Number(r.deduct||0),0);
+  const tN = tA - tD;
+
+  // Table
+  doc.autoTable({
+    startY: 28,
+    head: [["#","วันที่","รายการ","หมวด","ยอดเบิก (บาท)","หักคืน สร. (บาท)","ยอดสุทธิ (บาท)"]],
+    body: [
+      ...data.map((r,i)=>[
+        i+1, r.date, r.description, r.category,
+        fmt(r.amount),
+        Number(r.deduct||0)>0 ? fmt(r.deduct) : "-",
+        fmt(Number(r.amount)-Number(r.deduct||0))
+      ]),
+      ["","","","รวมทั้งสิ้น", fmt(tA), tD>0?fmt(tD):"-", fmt(tN)]
+    ],
+    styles:{ font:"helvetica", fontSize:9, cellPadding:3 },
+    headStyles:{ fillColor:[46,117,182], textColor:255, fontStyle:"bold" },
+    alternateRowStyles:{ fillColor:[235,244,255] },
+    columnStyles:{
+      0:{cellWidth:8, halign:"center"},
+      1:{cellWidth:20},
+      2:{cellWidth:80},
+      3:{cellWidth:28},
+      4:{cellWidth:30, halign:"right"},
+      5:{cellWidth:32, halign:"right"},
+      6:{cellWidth:32, halign:"right"},
+    },
+    foot:[],
+    didParseCell: (d)=>{
+      if(d.row.index === data.length){
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [189,215,238];
+        d.cell.styles.textColor = [0,0,0];
+      }
+    }
+  });
+
+  // Footer
+  const pageH = doc.internal.pageSize.height;
+  doc.setTextColor(120,120,120);
+  doc.setFontSize(8);
+  doc.text(`พิมพ์เมื่อ: ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}`, 14, pageH-6);
+  doc.text(`ยอดสุทธิรวม: ${fmt(tN)} บาท`, 180, pageH-6);
+
+  doc.save(`${title}.pdf`);
 }
 
 function App(){
-  const [rows,setRows]         = useState(initialData);
-  const [nextId,setNextId]     = useState(12);
+  const [rows,setRows]           = useState(initialData);
+  const [nextId,setNextId]       = useState(12);
   const [showModal,setShowModal] = useState(false);
-  const [editRow,setEditRow]   = useState(null);
-  const [form,setForm]         = useState(emptyForm);
-  const [deleteId,setDeleteId] = useState(null);
-  const [view,setView]         = useState("summary"); // "summary" | "month:1/69" | "all"
-  const [activeTab,setActiveTab] = useState("all");   // used in month view
+  const [editRow,setEditRow]     = useState(null);
+  const [form,setForm]           = useState(emptyForm);
+  const [deleteId,setDeleteId]   = useState(null);
+  const [view,setView]           = useState("summary");
 
-  // Group by month
   const monthGroups = useMemo(()=>{
     const map = {};
     rows.forEach(r=>{
-      const m = parseMonth(r.date);
-      const y = parseYear(r.date);
-      const key = `${m}/${y}`;
-      if(!map[key]) map[key] = {month:m,year:y,key,rows:[]};
+      const key = `${parseMonth(r.date)}/${parseYear(r.date)}`;
+      if(!map[key]) map[key]={month:parseMonth(r.date),year:parseYear(r.date),key,rows:[]};
       map[key].rows.push(r);
     });
-    return Object.values(map).sort((a,b)=> a.year!==b.year ? a.year-b.year : a.month-b.month);
+    return Object.values(map).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
   },[rows]);
 
   const totalAmount = rows.reduce((s,r)=>s+Number(r.amount),0);
   const totalDeduct = rows.reduce((s,r)=>s+Number(r.deduct||0),0);
-  const totalNet    = totalAmount - totalDeduct;
+  const totalNet    = totalAmount-totalDeduct;
 
   const openAdd  = ()=>{setForm(emptyForm);setEditRow(null);setShowModal(true)};
   const openEdit = r=>{setForm({date:r.date,amount:r.amount,deduct:r.deduct||0,description:r.description,category:r.category});setEditRow(r.id);setShowModal(true)};
@@ -101,15 +152,24 @@ function App(){
     setShowModal(false);
   };
 
+  const currentMonthKey   = view.startsWith("month:") ? view.replace("month:","") : null;
+  const currentMonthGroup = currentMonthKey ? monthGroups.find(g=>g.key===currentMonthKey) : null;
+  const detailRows        = currentMonthGroup ? currentMonthGroup.rows : rows;
+
   const colGrid = "36px 78px 1fr 88px 88px 78px 78px 60px";
 
-  // Current month rows for detail view
-  const currentMonthKey = view.startsWith("month:") ? view.replace("month:","") : null;
-  const currentMonthGroup = currentMonthKey ? monthGroups.find(g=>g.key===currentMonthKey) : null;
-  const detailRows = currentMonthGroup ? currentMonthGroup.rows : rows;
-
-  function RowTable({data}){
-    return(
+  function RowTable({data, pdfTitle}){
+    const tA = data.reduce((s,r)=>s+Number(r.amount),0);
+    const tD = data.reduce((s,r)=>s+Number(r.deduct||0),0);
+    const tN = tA-tD;
+    return(<>
+      {/* Export btn */}
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+        <button onClick={()=>exportPDF(data, pdfTitle)}
+          style={{background:"linear-gradient(135deg,#10b981,#059669)",color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 16px #10b98140"}}>
+          📄 Export PDF
+        </button>
+      </div>
       <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,border:"1px solid rgba(255,255,255,0.08)",overflowX:"auto"}}>
         <div style={{display:"grid",gridTemplateColumns:colGrid,padding:"9px 12px",background:"rgba(255,255,255,0.06)",color:"#64748b",fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",borderBottom:"1px solid rgba(255,255,255,0.06)",minWidth:600}}>
           <div>#</div><div>วันที่</div><div>รายการ</div><div>หมวด</div>
@@ -119,7 +179,7 @@ function App(){
           <div style={{textAlign:"center"}}>จัดการ</div>
         </div>
         {data.map((r,i)=>{
-          const net = Number(r.amount)-Number(r.deduct||0);
+          const net=Number(r.amount)-Number(r.deduct||0);
           return(
             <div key={r.id} className="row-item" style={{display:"grid",gridTemplateColumns:colGrid,padding:"10px 12px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.04)",background:i%2===0?"transparent":"rgba(255,255,255,0.02)",transition:"background .15s",minWidth:600}}>
               <div style={{color:"#475569",fontSize:11}}>{i+1}</div>
@@ -136,80 +196,73 @@ function App(){
             </div>
           );
         })}
-        {/* Total */}
-        {(()=>{
-          const tA = data.reduce((s,r)=>s+Number(r.amount),0);
-          const tD = data.reduce((s,r)=>s+Number(r.deduct||0),0);
-          const tN = tA-tD;
-          return(
-            <div style={{display:"grid",gridTemplateColumns:colGrid,padding:"11px 12px",background:"rgba(59,130,246,0.12)",borderTop:"2px solid #3b82f640",minWidth:600}}>
-              <div/><div/>
-              <div style={{color:"#93c5fd",fontWeight:700,fontSize:12}}>รวม</div>
-              <div/>
-              <div style={{color:"#60a5fa",fontWeight:700,fontSize:13,textAlign:"right"}}>฿{fmt(tA)}</div>
-              <div style={{color:"#f87171",fontWeight:700,fontSize:13,textAlign:"right"}}>{tD>0?`-฿${fmt(tD)}`:"-"}</div>
-              <div style={{color:"#34d399",fontWeight:700,fontSize:14,textAlign:"right"}}>฿{fmt(tN)}</div>
-              <div/>
-            </div>
-          );
-        })()}
+        <div style={{display:"grid",gridTemplateColumns:colGrid,padding:"11px 12px",background:"rgba(59,130,246,0.12)",borderTop:"2px solid #3b82f640",minWidth:600}}>
+          <div/><div/>
+          <div style={{color:"#93c5fd",fontWeight:700,fontSize:12}}>รวม</div><div/>
+          <div style={{color:"#60a5fa",fontWeight:700,fontSize:13,textAlign:"right"}}>฿{fmt(tA)}</div>
+          <div style={{color:"#f87171",fontWeight:700,fontSize:13,textAlign:"right"}}>{tD>0?`-฿${fmt(tD)}`:"-"}</div>
+          <div style={{color:"#34d399",fontWeight:700,fontSize:14,textAlign:"right"}}>฿{fmt(tN)}</div>
+          <div/>
+        </div>
       </div>
-    );
+    </>);
   }
 
   return(
     <div style={{minHeight:"100vh",padding:"20px 12px"}}>
       <div style={{maxWidth:920,margin:"0 auto"}}>
 
-        {/* Top header */}
+        {/* Header */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            {view!=="summary" && (
-              <button onClick={()=>setView("summary")} style={{background:"rgba(255,255,255,0.08)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"6px 14px",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
-                ← กลับ
-              </button>
+            {view!=="summary"&&(
+              <button onClick={()=>setView("summary")} style={{background:"rgba(255,255,255,0.08)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"6px 14px",fontSize:13,cursor:"pointer"}}>← กลับ</button>
             )}
             <div>
               <div style={{color:"#64748b",fontSize:10,letterSpacing:3,textTransform:"uppercase"}}>ใบสรุปค่าใช้จ่าย</div>
               <h1 style={{color:"#f8fafc",fontSize:22,fontWeight:700}}>
-                {view==="summary" ? "ภาพรวมทุกเดือน" :
-                 view==="all" ? "รายการทั้งหมด" :
-                 `${MONTH_FULL[currentMonthGroup?.month||1]} 25${currentMonthGroup?.year||69}`}
+                {view==="summary"?"ภาพรวมทุกเดือน":view==="all"?"รายการทั้งหมด":`${MONTH_FULL[currentMonthGroup?.month||1]} 25${currentMonthGroup?.year||69}`}
               </h1>
             </div>
           </div>
-          <button onClick={openAdd} style={{background:"linear-gradient(135deg,#3b82f6,#06b6d4)",color:"#fff",border:"none",borderRadius:11,padding:"9px 16px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 20px #3b82f640"}}>
-            <span style={{fontSize:17,lineHeight:1}}>+</span> เพิ่มรายการ
-          </button>
+          <div style={{display:"flex",gap:8}}>
+            {view==="summary"&&(
+              <button onClick={()=>exportPDF(rows,"สรุปค่าใช้จ่ายทั้งหมด")}
+                style={{background:"linear-gradient(135deg,#10b981,#059669)",color:"#fff",border:"none",borderRadius:11,padding:"9px 14px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:5,boxShadow:"0 4px 16px #10b98140"}}>
+                📄 Export ทั้งหมด
+              </button>
+            )}
+            <button onClick={openAdd} style={{background:"linear-gradient(135deg,#3b82f6,#06b6d4)",color:"#fff",border:"none",borderRadius:11,padding:"9px 14px",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:5,boxShadow:"0 4px 16px #3b82f640"}}>
+              + เพิ่มรายการ
+            </button>
+          </div>
         </div>
 
-        {/* ===== SUMMARY VIEW ===== */}
-        {view==="summary" && (<>
-          {/* Grand total cards */}
+        {/* SUMMARY VIEW */}
+        {view==="summary"&&(<>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:22}}>
             {[
-              {label:"ยอดเบิกรวมทั้งหมด", value:`฿${fmt(totalAmount)}`, accent:"#3b82f6"},
-              {label:"หักคืน สร. รวม",     value:`฿${fmt(totalDeduct)}`, accent:"#ef4444"},
-              {label:"ยอดสุทธิรวม",        value:`฿${fmt(totalNet)}`,    accent:"#10b981"},
+              {label:"ยอดเบิกรวม",value:`฿${fmt(totalAmount)}`,accent:"#3b82f6"},
+              {label:"หักคืน สร.",value:`฿${fmt(totalDeduct)}`,accent:"#ef4444"},
+              {label:"ยอดสุทธิรวม",value:`฿${fmt(totalNet)}`,accent:"#10b981"},
             ].map((c,i)=>(
-              <div key={i} style={{background:"rgba(255,255,255,0.05)",borderRadius:14,padding:"14px 16px",border:`1px solid ${c.accent}44`,backdropFilter:"blur(8px)"}}>
+              <div key={i} style={{background:"rgba(255,255,255,0.05)",borderRadius:14,padding:"14px 16px",border:`1px solid ${c.accent}44`}}>
                 <div style={{color:"#94a3b8",fontSize:10,marginBottom:5}}>{c.label}</div>
                 <div style={{color:c.accent,fontSize:17,fontWeight:700}}>{c.value}</div>
               </div>
             ))}
           </div>
 
-          {/* Month cards */}
           <div style={{color:"#64748b",fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>สรุปรายเดือน — กดเพื่อดูรายละเอียด</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14,marginBottom:20}}>
             {monthGroups.map(g=>{
-              const tA = g.rows.reduce((s,r)=>s+Number(r.amount),0);
-              const tD = g.rows.reduce((s,r)=>s+Number(r.deduct||0),0);
-              const tN = tA-tD;
-              const pct = tA>0 ? Math.round((tD/tA)*100) : 0;
+              const tA=g.rows.reduce((s,r)=>s+Number(r.amount),0);
+              const tD=g.rows.reduce((s,r)=>s+Number(r.deduct||0),0);
+              const tN=tA-tD;
+              const pct=tA>0?Math.round((tD/tA)*100):0;
               return(
                 <div key={g.key} className="month-card" onClick={()=>setView(`month:${g.key}`)}
-                  style={{background:"rgba(255,255,255,0.05)",borderRadius:16,padding:"18px 20px",border:"1px solid rgba(255,255,255,0.1)",backdropFilter:"blur(8px)"}}>
+                  style={{background:"rgba(255,255,255,0.05)",borderRadius:16,padding:"18px 20px",border:"1px solid rgba(255,255,255,0.1)"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                     <div style={{color:"#f8fafc",fontWeight:700,fontSize:16}}>{MONTH_FULL[g.month]} 25{g.year}</div>
                     <span style={{background:"rgba(59,130,246,0.2)",color:"#60a5fa",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{g.rows.length} รายการ</span>
@@ -224,12 +277,10 @@ function App(){
                       <div style={{color:"#f87171",fontWeight:700,fontSize:14}}>{tD>0?`฿${fmt(tD)}`:"-"}</div>
                     </div>
                   </div>
-                  {/* Net highlight */}
                   <div style={{background:"linear-gradient(135deg,rgba(16,185,129,0.15),rgba(6,182,212,0.1))",borderRadius:10,padding:"10px 14px",border:"1px solid rgba(16,185,129,0.2)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <span style={{color:"#94a3b8",fontSize:11}}>ยอดสุทธิ</span>
                     <span style={{color:"#34d399",fontWeight:700,fontSize:16}}>฿{fmt(tN)}</span>
                   </div>
-                  {/* Progress bar */}
                   {tD>0&&(
                     <div style={{marginTop:12}}>
                       <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
@@ -246,30 +297,30 @@ function App(){
               );
             })}
           </div>
-
-          {/* View all button */}
           <button onClick={()=>setView("all")} style={{width:"100%",background:"rgba(255,255,255,0.05)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"12px",fontSize:13,cursor:"pointer"}}>
             ดูรายการทั้งหมด ({rows.length} รายการ)
           </button>
         </>)}
 
-        {/* ===== MONTH DETAIL or ALL VIEW ===== */}
-        {(view.startsWith("month:") || view==="all") && (
-          <RowTable data={view==="all" ? rows : detailRows}/>
+        {/* DETAIL / ALL VIEW */}
+        {(view.startsWith("month:")||view==="all")&&(
+          <RowTable
+            data={view==="all"?rows:detailRows}
+            pdfTitle={view==="all"?"สรุปค่าใช้จ่ายทั้งหมด":`สรุปค่าใช้จ่าย ${MONTH_FULL[currentMonthGroup?.month||1]} 25${currentMonthGroup?.year||69}`}
+          />
         )}
-
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Modal */}
       {showModal&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:16}}>
           <div style={{background:"#1e293b",borderRadius:20,padding:24,width:"min(92vw,420px)",border:"1px solid rgba(255,255,255,0.1)",boxShadow:"0 25px 60px rgba(0,0,0,0.7)"}}>
             <h2 style={{color:"#f8fafc",fontWeight:700,fontSize:17,marginBottom:16}}>{editRow?"แก้ไขรายการ":"เพิ่มรายการใหม่"}</h2>
             {[
-              {label:"วันที่",             key:"date",        placeholder:"เช่น 6/1/69",  type:"text"},
-              {label:"ยอดเบิก (บาท)",     key:"amount",      placeholder:"0.00",          type:"number"},
-              {label:"หักคืน สร. (บาท)",  key:"deduct",      placeholder:"0.00 (ถ้ามี)", type:"number"},
-              {label:"รายการ",             key:"description", placeholder:"รายละเอียด...",type:"text"},
+              {label:"วันที่",            key:"date",        placeholder:"เช่น 6/1/69",  type:"text"},
+              {label:"ยอดเบิก (บาท)",    key:"amount",      placeholder:"0.00",          type:"number"},
+              {label:"หักคืน สร. (บาท)", key:"deduct",      placeholder:"0.00 (ถ้ามี)", type:"number"},
+              {label:"รายการ",            key:"description", placeholder:"รายละเอียด...",type:"text"},
             ].map(f=>(
               <div key={f.key} style={{marginBottom:11}}>
                 <label style={{color:f.key==="deduct"?"#f87171":"#94a3b8",fontSize:12,display:"block",marginBottom:4}}>{f.label}</label>
