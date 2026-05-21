@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>บิลสรุปค่าใช้จ่าย</title>
+<title>Expense Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -173,8 +173,8 @@ function App(){
   const openEdit = r=>{setForm({date:r.date,amount:r.amount,deduct:r.deduct||0,description:r.description,category:r.category});setEditRow(r.id);setShowModal(true);};
   const saveForm = ()=>{
     if(!form.date||(!form.amount&&!form.deduct)||!form.description)return;
-    if(editRow!==null){setRows(p=>p.map(r=>r.id===editRow?{...r,...form,amount:Number(form.amount||0),deduct:Number(form.deduct||0)}:r));showToast("✅ แก้ไขรายการแล้ว");}
-    else{setRows(p=>[...p,{id:nextId,...form,amount:Number(form.amount||0),deduct:Number(form.deduct||0)}]);setNextId(p=>p+1);showToast("✅ เพิ่มรายการแล้ว");}
+    if(editRow!==null){setRows(p=>p.map(r=>r.id===editRow?{...r,...form,amount:Number(form.amount||0),deduct:Number(form.deduct||0)}:r));showToast("✅ แก้ไขDescriptionแล้ว");}
+    else{setRows(p=>[...p,{id:nextId,...form,amount:Number(form.amount||0),deduct:Number(form.deduct||0)}]);setNextId(p=>p+1);showToast("✅ Addแล้ว");}
     setShowModal(false);
   };
 
@@ -183,8 +183,8 @@ function App(){
   const openEditSal = r=>{setSalForm({month:r.month,year:r.year,expected:r.expected,paid:r.paid,note:r.note||""});setEditSal(r.id);setShowSalModal(true);};
   const saveSalForm = ()=>{
     if(!salForm.expected||!salForm.paid)return;
-    if(editSal!==null){setSalaries(p=>p.map(r=>r.id===editSal?{...r,...salForm,expected:Number(salForm.expected),paid:Number(salForm.paid)}:r));showToast("✅ แก้ไขแล้ว");}
-    else{setSalaries(p=>[...p,{id:Date.now(),...salForm,expected:Number(salForm.expected),paid:Number(salForm.paid)}]);showToast("✅ เพิ่มรายการเงินเดือนแล้ว");}
+    if(editSal!==null){setSalaries(p=>p.map(r=>r.id===editSal?{...r,...salForm,expected:Number(salForm.expected),paid:Number(salForm.paid)}:r));showToast("✅ Updated");}
+    else{setSalaries(p=>[...p,{id:Date.now(),...salForm,expected:Number(salForm.expected),paid:Number(salForm.paid)}]);showToast("✅ AddเงินMonthแล้ว");}
     setShowSalModal(false);
   };
 
@@ -192,8 +192,8 @@ function App(){
   const openEditCat = i=>{setCatForm({name:cats[i].name,color:cats[i].color});setEditCat(i);};
   const saveCat = ()=>{
     if(!catForm.name.trim())return;
-    if(editCat!==null){const old=cats[editCat].name;setCats(p=>p.map((c,idx)=>idx===editCat?{...catForm}:c));setRows(p=>p.map(r=>r.category===old?{...r,category:catForm.name}:r));showToast("✅ แก้ไขหมวดแล้ว");}
-    else{if(cats.find(c=>c.name===catForm.name.trim()))return;setCats(p=>[...p,{name:catForm.name.trim(),color:catForm.color}]);showToast("✅ เพิ่มหมวดแล้ว");}
+    if(editCat!==null){const old=cats[editCat].name;setCats(p=>p.map((c,idx)=>idx===editCat?{...catForm}:c));setRows(p=>p.map(r=>r.category===old?{...r,category:catForm.name}:r));showToast("✅ แก้ไขCategoryแล้ว");}
+    else{if(cats.find(c=>c.name===catForm.name.trim()))return;setCats(p=>[...p,{name:catForm.name.trim(),color:catForm.color}]);showToast("✅ เพิ่มCategoryแล้ว");}
     setEditCat(null);setCatForm({name:"",color:"#3b82f6"});
   };
 
@@ -211,7 +211,7 @@ function App(){
     const sel={background:"#0f172a",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"9px 8px",color:"#f8fafc",fontSize:14,outline:"none",cursor:"pointer"};
     return(
       <div style={{marginBottom:11}}>
-        <label style={{color:"#94a3b8",fontSize:12,display:"block",marginBottom:6}}>วันที่</label>
+        <label style={{color:"#94a3b8",fontSize:12,display:"block",marginBottom:6}}>Date</label>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1.6fr 1fr",gap:8}}>
           <select value={dd} onChange={e=>set(e.target.value,mm,yy)} style={sel}>{Array.from({length:31},(_,i)=><option key={i+1} value={i+1}>{i+1}</option>)}</select>
           <select value={mm} onChange={e=>set(dd,e.target.value,yy)} style={sel}>{MONTH_SHORT.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}</select>
@@ -231,7 +231,7 @@ function App(){
       </div>
       <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,border:"1px solid rgba(255,255,255,0.08)",overflowX:"auto"}}>
         <div style={{display:"grid",gridTemplateColumns:colGrid,padding:"9px 12px",background:"rgba(255,255,255,0.06)",color:"#64748b",fontSize:10,fontWeight:600,letterSpacing:1,textTransform:"uppercase",borderBottom:"1px solid rgba(255,255,255,0.06)",minWidth:600}}>
-          <div>#</div><div>วันที่</div><div>รายการ</div><div>หมวด</div><div style={{textAlign:"right"}}>ยอดเบิก</div><div style={{textAlign:"right",color:"#ef4444"}}>หักคืน</div><div style={{textAlign:"right",color:"#10b981"}}>สุทธิ</div><div style={{textAlign:"center"}}>จัดการ</div>
+          <div>#</div><div>Date</div><div>Description</div><div>Category</div><div style={{textAlign:"right"}}>Amount</div><div style={{textAlign:"right",color:"#ef4444"}}>Deduction</div><div style={{textAlign:"right",color:"#10b981"}}>Net</div><div style={{textAlign:"center"}}>Action</div>
         </div>
         {data.map((r,i)=>{const net=Number(r.amount)-Number(r.deduct||0);return(
           <div key={r.id} className="row-item" style={{display:"grid",gridTemplateColumns:colGrid,padding:"10px 12px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.04)",background:i%2===0?"transparent":"rgba(255,255,255,0.02)",transition:"background .15s",minWidth:600}}>
@@ -270,8 +270,8 @@ function App(){
         {/* Cards */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:20}}>
           {[
-            {label:"ยอดที่ต้องได้TOTAL",value:`฿${fmt(totalExpected)}`,accent:"#3b82f6"},
-            {label:"ได้รับจริงTOTAL",   value:`฿${fmt(totalPaid)}`,   accent:"#10b981"},
+            {label:"ExpectedTOTAL",value:`฿${fmt(totalExpected)}`,accent:"#3b82f6"},
+            {label:"PaidTOTAL",   value:`฿${fmt(totalPaid)}`,   accent:"#10b981"},
             {label:totalDiff>=0?"เกิน":"ขาด",value:`${totalDiff>=0?"+":""}฿${fmt(Math.abs(totalDiff))}`,accent:totalDiff>=0?"#34d399":"#f87171"},
           ].map((c,i)=>(
             <div key={i} style={{background:"rgba(255,255,255,0.05)",borderRadius:14,padding:"12px 14px",border:`1px solid ${c.accent}44`}}>
@@ -288,7 +288,7 @@ function App(){
 
         {/* List */}
         {sorted.length===0?(
-          <div style={{textAlign:"center",color:"#475569",padding:"40px 0",fontSize:14}}>ยังไม่มีรายการเงินเดือน<br/>กด "+ เพิ่มรายการ" เพื่อเริ่มต้น</div>
+          <div style={{textAlign:"center",color:"#475569",padding:"40px 0",fontSize:14}}>ยังไม่มีDescriptionเงินMonth<br/>กด "+ Add" เพื่อเริ่มต้น</div>
         ):(
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {sorted.map(r=>{
@@ -308,19 +308,19 @@ function App(){
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
                     <div style={{background:"rgba(59,130,246,0.08)",borderRadius:10,padding:"10px 12px"}}>
-                      <div style={{color:"#64748b",fontSize:10,marginBottom:3}}>ยอดที่ต้องได้</div>
+                      <div style={{color:"#64748b",fontSize:10,marginBottom:3}}>Expected</div>
                       <div style={{color:"#60a5fa",fontWeight:700,fontSize:15}}>฿{fmt(r.expected)}</div>
                     </div>
                     <div style={{background:diff>=0?"rgba(52,211,153,0.08)":"rgba(248,113,113,0.08)",borderRadius:10,padding:"10px 12px"}}>
-                      <div style={{color:"#64748b",fontSize:10,marginBottom:3}}>จ่ายจริง</div>
+                      <div style={{color:"#64748b",fontSize:10,marginBottom:3}}>Paid</div>
                       <div style={{color:diff>=0?"#34d399":"#f87171",fontWeight:700,fontSize:15}}>฿{fmt(r.paid)}</div>
                     </div>
                   </div>
                   {/* Progress */}
                   <div style={{marginBottom: r.note?10:0}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{color:"#64748b",fontSize:10}}>จ่ายแล้ว {pct}%</span>
-                      <span style={{color:diff>=0?"#34d399":"#f87171",fontSize:10,fontWeight:600}}>{diff>=0?"จ่ายครบ ✓":`ขาดอีก ฿${fmt(Math.abs(diff))}`}</span>
+                      <span style={{color:"#64748b",fontSize:10}}>Paid {pct}%</span>
+                      <span style={{color:diff>=0?"#34d399":"#f87171",fontSize:10,fontWeight:600}}>{diff>=0?"Fully Paid ✓":`Short ฿${fmt(Math.abs(diff))}`}</span>
                     </div>
                     <div style={{height:6,background:"rgba(255,255,255,0.08)",borderRadius:3,overflow:"hidden"}}>
                       <div style={{height:"100%",width:`${Math.min(pct,100)}%`,background:diff>=0?"linear-gradient(90deg,#10b981,#34d399)":"linear-gradient(90deg,#ef4444,#f97316)",borderRadius:3,transition:"width .3s"}}/>
@@ -344,7 +344,7 @@ function App(){
 
         {/* ---- NAV TABS ---- */}
         <div style={{display:"flex",gap:8,marginBottom:20,background:"rgba(255,255,255,0.04)",borderRadius:14,padding:6,border:"1px solid rgba(255,255,255,0.08)"}}>
-          {[{id:"expense",label:"💸 ค่าใช้จ่าย"},{id:"salary",label:"💰 เงินเดือน"}].map(t=>(
+          {[{id:"expense",label:"💸 Expenses"},{id:"salary",label:"💰 Salary"}].map(t=>(
             <button key={t.id} onClick={()=>{setTab(t.id);setView("summary");}} className="nav-tab"
               style={{flex:1,padding:"10px 0",borderRadius:10,fontSize:14,fontWeight:600,color:tab===t.id?"#f8fafc":"#64748b",background:tab===t.id?"linear-gradient(135deg,#3b82f6,#06b6d4)":"transparent",boxShadow:tab===t.id?"0 4px 12px #3b82f640":"none",transition:"all .2s"}}>
               {t.label}
@@ -355,20 +355,20 @@ function App(){
         {/* ---- HEADER ---- */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18,flexWrap:"wrap",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            {tab==="expense"&&view!=="summary"&&<button onClick={()=>setView("summary")} style={{background:"rgba(255,255,255,0.08)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"6px 14px",fontSize:13,cursor:"pointer"}}>← กลับ</button>}
+            {tab==="expense"&&view!=="summary"&&<button onClick={()=>setView("summary")} style={{background:"rgba(255,255,255,0.08)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"6px 14px",fontSize:13,cursor:"pointer"}}>← Back</button>}
             <div>
-              <div style={{color:"#64748b",fontSize:10,letterSpacing:3,textTransform:"uppercase"}}>{tab==="expense"?"Expense Summary":"บัญชีเงินเดือน"}</div>
+              <div style={{color:"#64748b",fontSize:10,letterSpacing:3,textTransform:"uppercase"}}>{tab==="expense"?"Expense Summary":"Salary Account"}</div>
               <h1 style={{color:"#f8fafc",fontSize:20,fontWeight:700}}>
-                {tab==="salary"?"Salary Summary":view==="summary"?"ภาพTOTALทุกเดือน":view==="all"?"รายการทั้งหมด":`${MONTH_FULL[currentMonthGroup?.month||1]} 25${currentMonthGroup?.year||69}`}
+                {tab==="salary"?"Salary Summary":view==="summary"?"ภาพTOTALทุกMonth":view==="all"?"All Records":`${MONTH_FULL[currentMonthGroup?.month||1]} 25${currentMonthGroup?.year||69}`}
               </h1>
             </div>
           </div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             {tab==="expense"&&view==="summary"&&<>
-              <button onClick={()=>setShowCatModal(true)} style={{background:"rgba(168,85,247,0.2)",color:"#c084fc",border:"1px solid #a855f744",borderRadius:11,padding:"9px 12px",fontSize:13,fontWeight:600,cursor:"pointer"}}>🏷️ หมวด</button>
+              <button onClick={()=>setShowCatModal(true)} style={{background:"rgba(168,85,247,0.2)",color:"#c084fc",border:"1px solid #a855f744",borderRadius:11,padding:"9px 12px",fontSize:13,fontWeight:600,cursor:"pointer"}}>🏷️ Category</button>
               <button onClick={()=>exportPDF(rows,"All Expenses")} style={{background:"linear-gradient(135deg,#10b981,#059669)",color:"#fff",border:"none",borderRadius:11,padding:"9px 12px",fontSize:13,fontWeight:600,cursor:"pointer"}}>📄 Export</button>
             </>}
-            <button onClick={tab==="expense"?openAdd:openAddSal} style={{background:"linear-gradient(135deg,#3b82f6,#06b6d4)",color:"#fff",border:"none",borderRadius:11,padding:"9px 14px",fontSize:13,fontWeight:600,cursor:"pointer"}}>+ เพิ่มรายการ</button>
+            <button onClick={tab==="expense"?openAdd:openAddSal} style={{background:"linear-gradient(135deg,#3b82f6,#06b6d4)",color:"#fff",border:"none",borderRadius:11,padding:"9px 14px",fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Add</button>
           </div>
         </div>
 
@@ -376,10 +376,10 @@ function App(){
         {tab==="expense"&&(<>
           {view==="summary"&&(<>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:20}}>
-              {[{label:"ยอดเบิกTOTAL",value:`฿${fmt(totalAmount)}`,accent:"#3b82f6"},{label:"หักคืน สร.",value:`฿${fmt(totalDeduct)}`,accent:"#ef4444"},{label:"ยอดสุทธิTOTAL",value:`฿${fmt(totalNet)}`,accent:"#10b981"}]
+              {[{label:"AmountTOTAL",value:`฿${fmt(totalAmount)}`,accent:"#3b82f6"},{label:"Deduction",value:`฿${fmt(totalDeduct)}`,accent:"#ef4444"},{label:"NetTOTAL",value:`฿${fmt(totalNet)}`,accent:"#10b981"}]
                 .map((c,i)=><div key={i} style={{background:"rgba(255,255,255,0.05)",borderRadius:14,padding:"12px 14px",border:`1px solid ${c.accent}44`}}><div style={{color:"#94a3b8",fontSize:10,marginBottom:4}}>{c.label}</div><div style={{color:c.accent,fontSize:15,fontWeight:700}}>{c.value}</div></div>)}
             </div>
-            <div style={{color:"#64748b",fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>สรุปรายเดือน</div>
+            <div style={{color:"#64748b",fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Monthly Summary</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:12,marginBottom:18}}>
               {monthGroups.map(g=>{
                 const tA=g.rows.reduce((s,r)=>s+Number(r.amount),0);
@@ -390,23 +390,23 @@ function App(){
                   <div key={g.key} className="month-card" onClick={()=>setView(`month:${g.key}`)} style={{background:"rgba(255,255,255,0.05)",borderRadius:16,padding:"16px 18px",border:"1px solid rgba(255,255,255,0.1)"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                       <div style={{color:"#f8fafc",fontWeight:700,fontSize:15}}>{MONTH_FULL[g.month]} 25{g.year}</div>
-                      <span style={{background:"rgba(59,130,246,0.2)",color:"#60a5fa",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{g.rows.length} รายการ</span>
+                      <span style={{background:"rgba(59,130,246,0.2)",color:"#60a5fa",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{g.rows.length} Description</span>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-                      <div style={{background:"rgba(59,130,246,0.1)",borderRadius:10,padding:"8px 10px"}}><div style={{color:"#64748b",fontSize:10,marginBottom:2}}>ยอดเบิก</div><div style={{color:"#60a5fa",fontWeight:700,fontSize:13}}>฿{fmt(tA)}</div></div>
-                      <div style={{background:"rgba(239,68,68,0.1)",borderRadius:10,padding:"8px 10px"}}><div style={{color:"#64748b",fontSize:10,marginBottom:2}}>หักคืน</div><div style={{color:"#f87171",fontWeight:700,fontSize:13}}>{tD>0?`฿${fmt(tD)}`:"-"}</div></div>
+                      <div style={{background:"rgba(59,130,246,0.1)",borderRadius:10,padding:"8px 10px"}}><div style={{color:"#64748b",fontSize:10,marginBottom:2}}>Amount</div><div style={{color:"#60a5fa",fontWeight:700,fontSize:13}}>฿{fmt(tA)}</div></div>
+                      <div style={{background:"rgba(239,68,68,0.1)",borderRadius:10,padding:"8px 10px"}}><div style={{color:"#64748b",fontSize:10,marginBottom:2}}>Deduction</div><div style={{color:"#f87171",fontWeight:700,fontSize:13}}>{tD>0?`฿${fmt(tD)}`:"-"}</div></div>
                     </div>
                     <div style={{background:"linear-gradient(135deg,rgba(16,185,129,0.15),rgba(6,182,212,0.1))",borderRadius:10,padding:"8px 12px",border:"1px solid rgba(16,185,129,0.2)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <span style={{color:"#94a3b8",fontSize:11}}>ยอดสุทธิ</span>
+                      <span style={{color:"#94a3b8",fontSize:11}}>Net</span>
                       <span style={{color:"#34d399",fontWeight:700,fontSize:15}}>฿{fmt(tN)}</span>
                     </div>
                     {tD>0&&<div style={{marginTop:10}}><div style={{height:4,background:"rgba(255,255,255,0.08)",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#ef4444,#f97316)",borderRadius:2}}/></div></div>}
-                    <div style={{marginTop:10,color:"#3b82f6",fontSize:11,textAlign:"right"}}>ดูรายละเอียด →</div>
+                    <div style={{marginTop:10,color:"#3b82f6",fontSize:11,textAlign:"right"}}>View Detail →</div>
                   </div>
                 );
               })}
             </div>
-            <button onClick={()=>setView("all")} style={{width:"100%",background:"rgba(255,255,255,0.05)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"11px",fontSize:13,cursor:"pointer"}}>ดูรายการทั้งหมด ({rows.length} รายการ)</button>
+            <button onClick={()=>setView("all")} style={{width:"100%",background:"rgba(255,255,255,0.05)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"11px",fontSize:13,cursor:"pointer"}}>ดูAll Records ({rows.length} Description)</button>
           </>)}
           {(view.startsWith("month:")||view==="all")&&<RowTable data={view==="all"?rows:detailRows} pdfTitle={view==="all"?"All Expenses":`สรุปค่าใช้จ่าย ${MONTH_FULL[currentMonthGroup?.month||1]} 25${currentMonthGroup?.year||69}`}/>}
         </>)}
@@ -419,9 +419,9 @@ function App(){
       {showModal&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:16}}>
           <div style={{background:"#1e293b",borderRadius:20,padding:24,width:"min(92vw,420px)",border:"1px solid rgba(255,255,255,0.1)",boxShadow:"0 25px 60px rgba(0,0,0,0.7)"}}>
-            <h2 style={{color:"#f8fafc",fontWeight:700,fontSize:17,marginBottom:16}}>{editRow?"แก้ไขรายการ":"เพิ่มรายการใหม่"}</h2>
+            <h2 style={{color:"#f8fafc",fontWeight:700,fontSize:17,marginBottom:16}}>{editRow?"แก้ไขDescription":"Addใหม่"}</h2>
             <DateDropdown value={form.date} onChange={v=>setForm({...form,date:v})}/>
-            {[{label:"Amount (THB)",key:"amount",placeholder:"0.00",type:"number"},{label:"Deduction (THB)",key:"deduct",placeholder:"0.00 (ถ้ามี)",type:"number"},{label:"รายการ",key:"description",placeholder:"รายละเอียด...",type:"text"}].map(f=>(
+            {[{label:"Amount (THB)",key:"amount",placeholder:"0.00",type:"number"},{label:"Deduction (THB)",key:"deduct",placeholder:"0.00 (ถ้ามี)",type:"number"},{label:"Description",key:"description",placeholder:"Details...",type:"text"}].map(f=>(
               <div key={f.key} style={{marginBottom:11}}>
                 <label style={{color:f.key==="deduct"?"#f87171":"#94a3b8",fontSize:12,display:"block",marginBottom:4}}>{f.label}</label>
                 <input type={f.type} value={form[f.key]} placeholder={f.placeholder} onChange={e=>setForm({...form,[f.key]:e.target.value})}
@@ -429,14 +429,14 @@ function App(){
               </div>
             ))}
             <div style={{marginBottom:16}}>
-              <label style={{color:"#94a3b8",fontSize:12,display:"block",marginBottom:4}}>หมวดหมู่</label>
+              <label style={{color:"#94a3b8",fontSize:12,display:"block",marginBottom:4}}>Categoryหมู่</label>
               <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} style={{width:"100%",background:"#1e293b",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"9px 12px",color:"#f8fafc",fontSize:14,outline:"none"}}>
                 {cats.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
               </select>
             </div>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setShowModal(false)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>ยกเลิก</button>
-              <button onClick={saveForm} style={{flex:2,background:"linear-gradient(135deg,#3b82f6,#06b6d4)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{editRow?"บันทึก":"เพิ่มรายการ"}</button>
+              <button onClick={()=>setShowModal(false)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>Cancel</button>
+              <button onClick={saveForm} style={{flex:2,background:"linear-gradient(135deg,#3b82f6,#06b6d4)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{editRow?"Save":"Add"}</button>
             </div>
           </div>
         </div>
@@ -446,9 +446,9 @@ function App(){
       {showSalModal&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:16}}>
           <div style={{background:"#1e293b",borderRadius:20,padding:24,width:"min(92vw,420px)",border:"1px solid rgba(16,185,129,0.3)",boxShadow:"0 25px 60px rgba(0,0,0,0.7)"}}>
-            <h2 style={{color:"#f8fafc",fontWeight:700,fontSize:17,marginBottom:16}}>💰 {editSal?"แก้ไขเงินเดือน":"เพิ่มรายการเงินเดือน"}</h2>
+            <h2 style={{color:"#f8fafc",fontWeight:700,fontSize:17,marginBottom:16}}>💰 {editSal?"แก้ไขเงินMonth":"AddเงินMonth"}</h2>
             <div style={{marginBottom:12}}>
-              <label style={{color:"#94a3b8",fontSize:12,display:"block",marginBottom:6}}>เดือน / ปี</label>
+              <label style={{color:"#94a3b8",fontSize:12,display:"block",marginBottom:6}}>Month / ปี</label>
               <div style={{display:"grid",gridTemplateColumns:"1.6fr 1fr",gap:8}}>
                 <select value={salForm.month} onChange={e=>setSalForm({...salForm,month:parseInt(e.target.value)})} style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"9px 10px",color:"#f8fafc",fontSize:14,outline:"none"}}>
                   {MONTH_FULL.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
@@ -458,10 +458,10 @@ function App(){
                 </select>
               </div>
             </div>
-            {[{label:"ยอดที่ต้องได้ (บาท)",key:"expected",color:"#60a5fa"},{label:"ได้รับจริง (บาท)",key:"paid",color:"#34d399"},{label:"หมายเหตุ (ถ้ามี)",key:"note",color:"#94a3b8"}].map(f=>(
+            {[{label:"Expected (บาท)",key:"expected",color:"#60a5fa"},{label:"Paid (บาท)",key:"paid",color:"#34d399"},{label:"Note (ถ้ามี)",key:"note",color:"#94a3b8"}].map(f=>(
               <div key={f.key} style={{marginBottom:11}}>
                 <label style={{color:f.color,fontSize:12,display:"block",marginBottom:4}}>{f.label}</label>
-                <input type={f.key==="note"?"text":"number"} value={salForm[f.key]} placeholder={f.key==="note"?"เช่น จ่ายบางส่วน...":"0.00"} onChange={e=>setSalForm({...salForm,[f.key]:e.target.value})}
+                <input type={f.key==="note"?"text":"number"} value={salForm[f.key]} placeholder={f.key==="note"?"e.g. Partial payment...":"0.00"} onChange={e=>setSalForm({...salForm,[f.key]:e.target.value})}
                   style={{width:"100%",background:"rgba(255,255,255,0.07)",border:`1px solid ${f.color}44`,borderRadius:10,padding:"9px 12px",color:"#f8fafc",fontSize:14,outline:"none"}}/>
               </div>
             ))}
@@ -469,13 +469,13 @@ function App(){
             {salForm.expected&&salForm.paid&&(()=>{
               const diff=Number(salForm.paid)-Number(salForm.expected);
               return <div style={{background:diff>=0?"rgba(52,211,153,0.1)":"rgba(248,113,113,0.1)",borderRadius:10,padding:"10px 14px",marginBottom:14,border:`1px solid ${diff>=0?"#34d39944":"#f8717144"}`}}>
-                <span style={{color:"#94a3b8",fontSize:12}}>ผลต่าง: </span>
-                <span style={{color:diff>=0?"#34d399":"#f87171",fontWeight:700,fontSize:14}}>{diff>=0?`+${fmt(diff)}`:fmt(diff)} บาท {diff>=0?"✓ ครบ":"⚠ ขาด"}</span>
+                <span style={{color:"#94a3b8",fontSize:12}}>Difference: </span>
+                <span style={{color:diff>=0?"#34d399":"#f87171",fontWeight:700,fontSize:14}}>{diff>=0?`+${fmt(diff)}`:fmt(diff)} บาท {diff>=0?"✓ Full":"⚠ Short"}</span>
               </div>;
             })()}
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setShowSalModal(false)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>ยกเลิก</button>
-              <button onClick={saveSalForm} style={{flex:2,background:"linear-gradient(135deg,#10b981,#059669)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{editSal?"บันทึก":"เพิ่มรายการ"}</button>
+              <button onClick={()=>setShowSalModal(false)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>Cancel</button>
+              <button onClick={saveSalForm} style={{flex:2,background:"linear-gradient(135deg,#10b981,#059669)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{editSal?"Save":"Add"}</button>
             </div>
           </div>
         </div>
@@ -486,25 +486,25 @@ function App(){
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:16}}>
           <div style={{background:"#1e293b",borderRadius:20,padding:24,width:"min(92vw,480px)",border:"1px solid rgba(168,85,247,0.3)",boxShadow:"0 25px 60px rgba(0,0,0,0.7)",maxHeight:"85vh",overflowY:"auto"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <h2 style={{color:"#f8fafc",fontWeight:700,fontSize:17}}>🏷️ จัดการหมวดหมู่</h2>
+              <h2 style={{color:"#f8fafc",fontWeight:700,fontSize:17}}>🏷️ ActionCategoryหมู่</h2>
               <button onClick={()=>{setShowCatModal(false);setEditCat(null);setCatForm({name:"",color:"#3b82f6"});}} style={{background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"none",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16}}>✕</button>
             </div>
             <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:16,marginBottom:18,border:"1px solid rgba(255,255,255,0.08)"}}>
-              <div style={{color:"#94a3b8",fontSize:12,marginBottom:10}}>{editCat!==null?"แก้ไขหมวดหมู่":"เพิ่มหมวดหมู่ใหม่"}</div>
-              <input value={catForm.name} placeholder="ชื่อหมวดหมู่..." onChange={e=>setCatForm({...catForm,name:e.target.value})} style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"9px 12px",color:"#f8fafc",fontSize:14,outline:"none",marginBottom:12}}/>
+              <div style={{color:"#94a3b8",fontSize:12,marginBottom:10}}>{editCat!==null?"แก้ไขCategoryหมู่":"เพิ่มCategoryหมู่ใหม่"}</div>
+              <input value={catForm.name} placeholder="ชื่อCategoryหมู่..." onChange={e=>setCatForm({...catForm,name:e.target.value})} style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"9px 12px",color:"#f8fafc",fontSize:14,outline:"none",marginBottom:12}}/>
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
                 {PRESET_COLORS.map(c=><button key={c} onClick={()=>setCatForm({...catForm,color:c})} style={{width:28,height:28,borderRadius:"50%",background:c,border:catForm.color===c?"3px solid #fff":"2px solid transparent",cursor:"pointer"}}/>)}
               </div>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-                <span style={{color:"#64748b",fontSize:11}}>ตัวอย่าง:</span>
-                <span style={{background:`${catForm.color}22`,color:catForm.color,borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600,border:`1px solid ${catForm.color}44`}}>{catForm.name||"ชื่อหมวด"}</span>
+                <span style={{color:"#64748b",fontSize:11}}>Preview:</span>
+                <span style={{background:`${catForm.color}22`,color:catForm.color,borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600,border:`1px solid ${catForm.color}44`}}>{catForm.name||"ชื่อCategory"}</span>
               </div>
               <div style={{display:"flex",gap:8}}>
-                {editCat!==null&&<button onClick={()=>{setEditCat(null);setCatForm({name:"",color:"#3b82f6"});}} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"9px 0",fontSize:13,cursor:"pointer"}}>ยกเลิก</button>}
-                <button onClick={saveCat} style={{flex:2,background:"linear-gradient(135deg,#a855f7,#8b5cf6)",color:"#fff",border:"none",borderRadius:10,padding:"9px 0",fontSize:13,fontWeight:700,cursor:"pointer"}}>{editCat!==null?"บันทึกการแก้ไข":"+ เพิ่มหมวดหมู่"}</button>
+                {editCat!==null&&<button onClick={()=>{setEditCat(null);setCatForm({name:"",color:"#3b82f6"});}} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"9px 0",fontSize:13,cursor:"pointer"}}>Cancel</button>}
+                <button onClick={saveCat} style={{flex:2,background:"linear-gradient(135deg,#a855f7,#8b5cf6)",color:"#fff",border:"none",borderRadius:10,padding:"9px 0",fontSize:13,fontWeight:700,cursor:"pointer"}}>{editCat!==null?"Save Changes":"+ เพิ่มCategoryหมู่"}</button>
               </div>
             </div>
-            <div style={{color:"#64748b",fontSize:11,marginBottom:10}}>หมวดหมู่ทั้งหมด ({cats.length})</div>
+            <div style={{color:"#64748b",fontSize:11,marginBottom:10}}>Categoryหมู่ทั้งหมด ({cats.length})</div>
             {cats.map((c,idx)=>(
               <div key={idx} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:editCat===idx?"rgba(168,85,247,0.1)":"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:6,border:editCat===idx?"1px solid #a855f744":"1px solid transparent"}}>
                 <span style={{background:`${c.color}22`,color:c.color,borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600,border:`1px solid ${c.color}44`}}>{c.name}</span>
@@ -523,11 +523,11 @@ function App(){
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}}>
           <div style={{background:"#1e293b",borderRadius:20,padding:24,width:"min(90vw,320px)",border:"1px solid rgba(239,68,68,0.3)",textAlign:"center"}}>
             <div style={{fontSize:34,marginBottom:8}}>🗑️</div>
-            <h3 style={{color:"#f8fafc",marginBottom:6,fontSize:16}}>ลบรายการนี้?</h3>
-            <p style={{color:"#64748b",fontSize:12,marginBottom:16}}>ไม่สามารถเรียกคืนได้</p>
+            <h3 style={{color:"#f8fafc",marginBottom:6,fontSize:16}}>DeleteDescriptionนี้?</h3>
+            <p style={{color:"#64748b",fontSize:12,marginBottom:16}}>This cannot be undone.</p>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setDeleteId(null)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>ยกเลิก</button>
-              <button onClick={()=>{setRows(p=>p.filter(r=>r.id!==deleteId));setDeleteId(null);showToast("🗑️ ลบแล้ว");}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>ลบ</button>
+              <button onClick={()=>setDeleteId(null)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>Cancel</button>
+              <button onClick={()=>{setRows(p=>p.filter(r=>r.id!==deleteId));setDeleteId(null);showToast("🗑️ Deleteแล้ว");}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>Delete</button>
             </div>
           </div>
         </div>
@@ -538,11 +538,11 @@ function App(){
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}}>
           <div style={{background:"#1e293b",borderRadius:20,padding:24,width:"min(90vw,320px)",border:"1px solid rgba(239,68,68,0.3)",textAlign:"center"}}>
             <div style={{fontSize:34,marginBottom:8}}>💰</div>
-            <h3 style={{color:"#f8fafc",marginBottom:6,fontSize:16}}>ลบรายการเงินเดือนนี้?</h3>
-            <p style={{color:"#64748b",fontSize:12,marginBottom:16}}>ไม่สามารถเรียกคืนได้</p>
+            <h3 style={{color:"#f8fafc",marginBottom:6,fontSize:16}}>DeleteDescriptionเงินMonthนี้?</h3>
+            <p style={{color:"#64748b",fontSize:12,marginBottom:16}}>This cannot be undone.</p>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setDeleteSalId(null)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>ยกเลิก</button>
-              <button onClick={()=>{setSalaries(p=>p.filter(r=>r.id!==deleteSalId));setDeleteSalId(null);showToast("🗑️ ลบแล้ว");}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>ลบ</button>
+              <button onClick={()=>setDeleteSalId(null)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>Cancel</button>
+              <button onClick={()=>{setSalaries(p=>p.filter(r=>r.id!==deleteSalId));setDeleteSalId(null);showToast("🗑️ Deleteแล้ว");}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>Delete</button>
             </div>
           </div>
         </div>
@@ -553,11 +553,11 @@ function App(){
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}}>
           <div style={{background:"#1e293b",borderRadius:20,padding:24,width:"min(90vw,320px)",border:"1px solid rgba(239,68,68,0.3)",textAlign:"center"}}>
             <div style={{fontSize:34,marginBottom:8}}>🏷️</div>
-            <h3 style={{color:"#f8fafc",marginBottom:6,fontSize:16}}>ลบหมวด "{cats[deleteCat]?.name}"?</h3>
-            <p style={{color:"#64748b",fontSize:12,marginBottom:16}}>รายการที่ใช้หมวดนี้จะยังคงอยู่</p>
+            <h3 style={{color:"#f8fafc",marginBottom:6,fontSize:16}}>DeleteCategory "{cats[deleteCat]?.name}"?</h3>
+            <p style={{color:"#64748b",fontSize:12,marginBottom:16}}>Descriptionที่ใช้Categoryนี้จะยังคงอยู่</p>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setDeleteCat(null)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>ยกเลิก</button>
-              <button onClick={()=>{setCats(p=>p.filter((_,i)=>i!==deleteCat));setDeleteCat(null);showToast("🗑️ ลบหมวดแล้ว");}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>ลบ</button>
+              <button onClick={()=>setDeleteCat(null)} style={{flex:1,background:"rgba(255,255,255,0.06)",color:"#94a3b8",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,cursor:"pointer"}}>Cancel</button>
+              <button onClick={()=>{setCats(p=>p.filter((_,i)=>i!==deleteCat));setDeleteCat(null);showToast("🗑️ DeleteCategoryแล้ว");}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:12,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>Delete</button>
             </div>
           </div>
         </div>
