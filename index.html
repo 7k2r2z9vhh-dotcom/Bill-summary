@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Duchanee Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --bg: #04030a;
+    --surface: #0a0812;
+    --surface2: #100e1a;
+    --border: #2a1f3d;
+    --border-gold: #8b6914;
+    --text: #f0e8d0;
+    --text2: #7a6a50;
+    --accent-red: #c0392b;
+    --accent-red2: #e74c3c;
+    --accent-gold: #c9922a;
+    --accent-gold2: #f0b429;
+    --accent-teal: #00c896;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  body{
+    background: var(--bg);
+    min-height: 100vh;
+    font-family: 'IBM Plex Sans Thai', 'Cinzel', sans-serif;
+    color: var(--text);
+    padding: 20px 12px 60px;
+  }
+
+  .container { max-width: 880px; margin: 0 auto; }
+  
+  .app-header { text-align: center; padding: 15px 0; }
+  .app-title {
+    font-family: 'Cinzel', serif; font-size: 24px; font-weight: 700; letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .app-subtitle { font-size: 10px; letter-spacing: 3px; color: var(--text2); text-transform: uppercase; margin-top: 4px; }
+
+  .grid-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 20px 0; }
+  .stat-box { background: var(--surface); border-radius: 6px; padding: 10px; border: 1px solid var(--border); text-align: center; }
+  .stat-label { color: var(--text2); font-size: 10px; margin-bottom: 2px; }
+  .stat-val { font-size: 13px; font-weight: 700; }
+
+  .grid-months { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .month-card {
+    background: var(--surface2); border-radius: 6px; padding: 12px; border: 1px solid var(--border);
+    transition: transform 0.2s;
+  }
+  .month-name { font-family: 'Cinzel', serif; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--accent-gold); }
+  .month-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: var(--text2); }
+  .month-net { border-top: 1px solid var(--border); margin-top: 6px; paddingTop: 6px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--accent-teal); }
+
+  .section-title { color: var(--text2); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  
+  .btn-pdf {
+    width: 100%; background: linear-gradient(135deg, var(--accent-red), var(--accent-red2)); color: #fff;
+    border: none; border-radius: 6px; padding: 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px;
+  }
+
+  .table-container { background: var(--surface); border-radius: 6px; border: 1px solid var(--border); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 12px; }
+  th { background: rgba(255,255,255,0.03); color: var(--text2); padding: 10px; text-align: left; font-weight: 500; border-bottom: 1px solid var(--border); }
+  td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+  tr:last-child td { border: none; background: rgba(255,255,255,0.01); font-weight: 700; }
+
+  .badge { background: rgba(201,146,42,0.1); color: var(--accent-gold); border-radius: 4px; padding: 2px 6px; font-size: 10px; border: 1px solid rgba(201,146,42,0.2); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="app-header">
+    <div class="app-title">DUCHANEE LEDGER</div>
+    <div class="app-subtitle">✦ Grand Finance Chronicle ✦</div>
+  </div>
+
+  <div class="grid-stats">
+    <div class="stat-box" style="border-color: rgba(74,158,255,0.3);">
+      <div class="stat-label">Gross</div>
+      <div class="stat-val" style="color: #4a9eff;">฿47,707.65</div>
+    </div>
+    <div class="stat-box" style="border-color: rgba(231,76,60,0.3);">
+      <div class="stat-label">Deduct</div>
+      <div class="stat-val" style="color: var(--accent-red2);">฿0.00</div>
+    </div>
+    <div class="stat-box" style="border-color: rgba(0,200,150,0.3);">
+      <div class="stat-label">Net Total</div>
+      <div class="stat-val" style="color: var(--accent-teal);">฿47,707.65</div>
+    </div>
+  </div>
+
+  <div class="section-title">Monthly Quarters</div>
+  <div class="grid-months">
+    <div class="month-card">
+      <div class="month-name">January 2026</div>
+      <div class="month-row"><span>Gross:</span><span style="color:#4a9eff">฿21,399.75</span></div>
+      <div class="month-row"><span>Deduct:</span><span>-</span></div>
+      <div class="month-net"><span>Net:</span><span>฿21,399.75</span></div>
+    </div>
+    <div class="month-card">
+      <div class="month-name">February 2026</div>
+      <div class="month-row"><span>Gross:</span><span style="color:#4a9eff">฿26,307.90</span></div>
+      <div class="month-row"><span>Deduct:</span><span>-</span></div>
+      <div class="month-net"><span>Net:</span><span>฿26,307.90</span></div>
+    </div>
+  </div>
+
+  <button class="btn-pdf" onclick="generatePDF()">📄 Export War Chronicle (PDF)</button>
+
+  <div class="section-title">Detailed History Logs</div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 35px;">#</th>
+          <th style="width: 70px;">Date</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th style="text-align: right;">Net Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td style="color: var(--text2);">6/1/69</td>
+          <td>ค่าล้อสัมภาระ ปี 68</td>
+          <td><span class="badge">Carry Over</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿15,000.00</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td style="color: var(--text2);">16/1/69</td>
+          <td>กา. คุณหมาเครื่องตู้หน้า 2H</td>
+          <td><span class="badge" style="color: var(--accent-red2); border-color: rgba(231,76,60,0.2);">Repair</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿1,926.00</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td style="color: var(--text2);">16/1/69</td>
+          <td>สร. Worker House</td>
+          <td><span class="badge" style="color: #8b5cf6; border-color: rgba(139,92,246,0.2);">Worker House</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿153.00</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td style="color: var(--text2);">19/1/69</td>
+          <td>สร. เหล็กเพิ่ก บนปลวก หน้าหม้อน้ำ</td>
+          <td><span class="badge" style="color: #3b82f6; border-color: rgba(59,130,246,0.2);">Materials</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿1,920.00</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td style="color: var(--text2);">23/1/69</td>
+          <td>แม่สร. น้ำ + ไฟ</td>
+          <td><span class="badge" style="color: #10b981; border-color: rgba(16,185,129,0.2);">Utilities</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿2,400.00</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td style="color: var(--text2);">23/1/69</td>
+          <td>สร. ไฟ</td>
+          <td><span class="badge" style="color: #10b981; border-color: rgba(16,185,129,0.2);">Utilities</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿26.75</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td style="color: var(--text2);">10/2/69</td>
+          <td>สร. ไฟ</td>
+          <td><span class="badge" style="color: #10b981; border-color: rgba(16,185,129,0.2);">Utilities</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿92.68</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td style="color: var(--text2);">12/2/69</td>
+          <td>สร. เหล็กสแลกลูก ๓จุก บนปลวกหม้อน้ำ</td>
+          <td><span class="badge" style="color: #3b82f6; border-color: rgba(59,130,246,0.2);">Materials</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿900.00</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td style="color: var(--text2);">13/2/69</td>
+          <td>สร. Net Php54</td>
+          <td><span class="badge" style="color: #06b6d4; border-color: rgba(6,182,212,0.2);">Internet</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿1,201.90</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td style="color: var(--text2);">13/2/69</td>
+          <td>สร. Net</td>
+          <td><span class="badge" style="color: #06b6d4; border-color: rgba(6,182,212,0.2);">Internet</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿2,068.00</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td style="color: var(--text2);">21/2/69</td>
+          <td>ค่าน้ำ + ไฟ</td>
+          <td><span class="badge" style="color: #10b981; border-color: rgba(16,185,129,0.2);">Utilities</span></td>
+          <td style="text-align: right; color: var(--accent-teal);">฿3,010.00</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td style="color: var(--accent-gold);">TOTAL SUMMARY</td>
+          <td></td>
+          <td style="text-align: right; color: var(--accent-teal); font-size: 13px;">฿47,707.65</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function generatePDF() {
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("DUCHANEE LEDGER - WAR CHRONICLE", 14, 15);
+      doc.autoTable({
+        startY: 22,
+        head: [['#', 'Date', 'Description', 'Category', 'Amount']],
+        body: [
+          ['1', '6/1/69', 'ค่าล้อสัมภาระ ปี 68', 'Carry Over', '15,000.00'],
+          ['2', '16/1/69', 'กา. คุณหมาเครื่องตู้หน้า 2H', 'Repair', '1,926.00'],
+          ['3', '16/1/69', 'สร. Worker House', 'Worker House', '153.00'],
+          ['4', '19/1/69', 'สร. เหล็กเพิ่ก บนปลวก หน้าหม้อน้ำ', 'Materials', '1,920.00'],
+          ['5', '23/1/69', 'แม่สร. น้ำ + ไฟ', 'Utilities', '2,400.00'],
+          ['6', '23/1/69', 'สร. ไฟ', 'Utilities', '26.75'],
+          ['7', '10/2/69', 'สร. ไฟ', 'Utilities', '92.68'],
+          ['8', '12/2/69', 'สร. เหล็กสแลกลูก ๓จุก บนปลวกหม้อน้ำ', 'Materials', '900.00'],
+          ['9', '13/2/69', 'สร. Net Php54', 'Internet', '1,201.90'],
+          ['10', '13/2/69', 'สร. Net', 'Internet', '2,068.00'],
+          ['11', '21/2/69', 'ค่าน้ำ + ไฟ', 'Utilities', '3,010.00'],
+          ['', '', 'TOTAL', '', '47,707.65']
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [20, 14, 30] }
+      });
+      doc.save("Duchanee-Ledger.pdf");
+    } catch(e) {
+      alert("ไม่สามารถสร้าง PDF ได้บนบราวเซอร์นี้: " + e.message);
+    }
+  }
+</script>
+
+</body>
+</html>
