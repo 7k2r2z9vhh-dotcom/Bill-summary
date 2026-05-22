@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Finance Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --bg:#000000;
+    --bg1:#0a0a0a;
+    --bg2:#111111;
+    --bg3:#1a1a1a;
+    --bg4:#222222;
+    --sep:#2a2a2a;
+    --sep2:#333333;
+    --text:#ffffff;
+    --text2:#aeaeb2;
+    --text3:#636366;
+    --blue:#0a84ff;
+    --green:#30d158;
+    --red:#ff453a;
+    --orange:#ff9f0a;
+    --purple:#bf5af2;
+    --teal:#5ac8fa;
+    --r:16px;
+    --r2:12px;
+    --r3:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow-x:hidden}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+    font-size:16px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  input,select,button,textarea{
+    font-family:'Inter',-apple-system,sans-serif;
+    -webkit-appearance:none;appearance:none;
+  }
+  ::-webkit-scrollbar{display:none}
+  
+  /* iOS-style transitions */
+  .card{
+    background:var(--bg2);border-radius:var(--r);
+    transition:transform 0.15s ease, opacity 0.15s ease;
+  }
+  .card:active{transform:scale(0.98);opacity:0.8}
+  
+  .tappable{
+    transition:opacity 0.1s ease;cursor:pointer;
+    -webkit-user-select:none;user-select:none;
+  }
+  .tappable:active{opacity:0.5}
+
+  /* Row hover */
+  .row-item{transition:background 0.1s ease}
+  .row-item:active{background:rgba(255,255,255,0.05)!important}
+
+  /* Month card */
+  .month-card{
+    background:var(--bg2);border-radius:var(--r);
+    transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.2s ease;
+    cursor:pointer;
+  }
+  .month-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+  .month-card:active{transform:scale(0.97)}
+
+  /* Nav */
+  .nav-tab{border:none;background:none;cursor:pointer;transition:opacity 0.1s}
+  .nav-tab:active{opacity:0.5}
+
+  /* Modal */
+  @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+  .modal-sheet{animation:slideUp 0.35s cubic-bezier(0.32,0.72,0,1) both}
+  .modal-overlay{animation:fadeIn 0.2s ease both}
+  .fade-up{animation:fadeUp 0.3s ease both}
+
+  /* Segmented control iOS style */
+  .seg-control{
+    background:var(--bg3);border-radius:var(--r2);padding:3px;
+    display:flex;gap:2px;
+  }
+  .seg-btn{
+    flex:1;border:none;border-radius:10px;padding:7px 12px;
+    font-size:13px;font-weight:500;cursor:pointer;
+    transition:all 0.2s cubic-bezier(0.34,1.2,0.64,1);
+    color:var(--text2);background:transparent;
+  }
+  .seg-btn.active{
+    background:var(--bg4);color:var(--text);
+    box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  /* iOS list style */
+  .ios-list{background:var(--bg2);border-radius:var(--r)}
+  .ios-row{
+    display:flex;align-items:center;padding:12px 16px;
+    border-bottom:0.5px solid var(--sep);
+    transition:background 0.1s;
+  }
+  .ios-row:last-child{border-bottom:none}
+  .ios-row:active{background:var(--bg3)}
+
+  /* Input iOS style */
+  .ios-input{
+    width:100%;background:var(--bg3);border:none;
+    border-radius:var(--r3);padding:12px 14px;
+    color:var(--text);font-size:16px;outline:none;
+    transition:box-shadow 0.2s ease;
+  }
+  .ios-input:focus{box-shadow:0 0 0 3px rgba(10,132,255,0.3)}
+  .ios-select{
+    width:100%;background:var(--bg3);border:none;
+    border-radius:var(--r3);padding:12px 14px;
+    color:var(--text);font-size:16px;outline:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23636366' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;
+    padding-right:36px;
+  }
+
+  /* Button iOS style */
+  .btn-ios{
+    border:none;border-radius:var(--r2);padding:14px;
+    font-size:16px;font-weight:600;cursor:pointer;
+    transition:opacity 0.1s ease, transform 0.1s ease;
+    width:100%;
+  }
+  .btn-ios:active{opacity:0.7;transform:scale(0.98)}
+  .btn-ios-sm{
+    border:none;border-radius:var(--r3);padding:10px 16px;
+    font-size:14px;font-weight:500;cursor:pointer;
+    transition:opacity 0.1s ease;
+  }
+  .btn-ios-sm:active{opacity:0.6}
+
+  /* Progress bar */
+  .progress-bar{
+    height:4px;background:var(--sep);border-radius:2px;overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;border-radius:2px;
+    transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  /* Badge */
+  .badge{
+    display:inline-flex;align-items:center;padding:2px 8px;
+    border-radius:20px;font-size:11px;font-weight:600;
+    letter-spacing:0.3px;
+  }
+
+  /* Summary number */
+  .sum-num{font-size:28px;font-weight:700;letter-spacing:-0.5px}
+  .sum-label{font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo, useEffect } = React;
+
+const SK="bill_data",SI="bill_nextid",SC="bill_cats",SS="bill_salary";
+const defaultCats=[
+  {name:"Carry Over",color:"#ff9f0a"},{name:"Repair",color:"#ff453a"},
+  {name:"Worker House",color:"#bf5af2"},{name:"Materials",color:"#0a84ff"},
+  {name:"Utilities",color:"#30d158"},{name:"Internet",color:"#5ac8fa"},{name:"Others",color:"#636366"},
+];
+const defaultData=[
+  {id:1,date:"6/1/69",amount:15000,deduct:0,description:"ค่าล้อสัมภาระ ปี 68",category:"Carry Over"},
+  {id:2,date:"16/1/69",amount:1926,deduct:0,description:"กา. คุณหมาเครื่องตู้หน้า 2H",category:"Repair"},
+  {id:3,date:"16/1/69",amount:153,deduct:0,description:"สร. บ้านคนงาน",category:"Worker House"},
+  {id:4,date:"19/1/69",amount:1920,deduct:0,description:"สร. เหล็กเพิ่ก บนปลวก หน้าหม้อน้ำ",category:"Materials"},
+  {id:5,date:"23/1/69",amount:2400,deduct:0,description:"แม่สร. น้ำ + ไฟ",category:"Utilities"},
+  {id:6,date:"23/1/69",amount:26.75,deduct:0,description:"สร. ไฟ",category:"Utilities"},
+  {id:7,date:"10/2/69",amount:92.68,deduct:0,description:"สร. ไฟ",category:"Utilities"},
+  {id:8,date:"12/2/69",amount:900,deduct:0,description:"สร. เหล็กสแลกลูก ๓จุก บนปลวกหม้อน้ำ",category:"Materials"},
+  {id:9,date:"13/2/69",amount:1251.90,deduct:0,description:"สร. Net Php54",category:"Internet"},
+  {id:10,date:"13/2/69",amount:2568,deduct:0,description:"สร. Net",category:"Internet"},
+  {id:11,date:"21/2/69",amount:3010,deduct:0,description:"ค่าน้ำ + ไฟ",category:"Utilities"},
+];
+const PRESET_COLORS=["#ff9f0a","#ff453a","#bf5af2","#0a84ff","#30d158","#5ac8fa","#636366","#ff375f","#64d2ff","#ffd60a"];
+const MONTH_FULL=["","January","February","March","April","May","June","July","August","September","October","November","December"];
+const MONTH_SHORT=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const fmt=n=>Number(n).toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2});
+function load(k,d){try{const s=localStorage.getItem(k);return s?JSON.parse(s):d;}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function pm(d){return parseInt(d.split("/")[1]);}
+function py(d){return parseInt(d.split("/")[2]);}
+
+// ---- PDF Export — Thai font via canvas ----
+async function exportPDF(data,title,isSalary=false){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+
+  async function drawText(text,x,y,size,color="#ffffff",maxW=260){
+    const canvas=document.createElement("canvas");
+    const scale=4;
+    canvas.width=3000;canvas.height=size*scale*2.5;
+    const ctx=canvas.getContext("2d");
+    ctx.font=`${size*scale}px Sarabun,Inter,sans-serif`;
+    ctx.fillStyle=color;
+    ctx.fillText(text,4,size*scale*1.5);
+    const mw=Math.min(ctx.measureText(text).width,2990);
+    const trim=document.createElement("canvas");
+    trim.width=Math.ceil(mw)+8;trim.height=canvas.height;
+    trim.getContext("2d").drawImage(canvas,0,0);
+    const wMM=Math.min((mw/scale),maxW);
+    const hMM=(size*scale*2.5)/scale;
+    doc.addImage(trim.toDataURL("image/png"),"PNG",x,y,wMM,hMM*0.45);
+    return wMM;
+  }
+
+  // Header bar
+  doc.setFillColor(15,15,20);
+  doc.rect(0,0,297,26,"F");
+  doc.setFillColor(30,30,40);
+  doc.rect(0,26,297,2,"F");
+
+  await drawText(title,12,4,14,"#ffffff",250);
+  await drawText(isSalary?"Salary Summary Report":"Expense Report — Company Reimbursement",12,16,8,"#888888",250);
+
+  const tA=data.reduce((s,r)=>s+Number(r.amount||0),0);
+  const tD=data.reduce((s,r)=>s+Number(r.deduct||0),0);
+  const tN=tA-tD;
+
+  if(isSalary){
+    const tE=data.reduce((s,r)=>s+Number(r.expected),0);
+    const tP=data.reduce((s,r)=>s+Number(r.paid),0);
+    doc.autoTable({
+      startY:32,
+      head:[["#","Month","Expected (THB)","Paid (THB)","Difference","Note"]],
+      body:[
+        ...data.map((r,i)=>{
+          const diff=Number(r.paid)-Number(r.expected);
+          return[i+1,`${MONTH_FULL[r.month]} ${r.year+1957}`,fmt(r.expected),fmt(r.paid),diff>=0?`+${fmt(diff)}`:fmt(diff),r.note||""];
+        }),
+        ["","","TOTAL",fmt(tE),fmt(tP),""],
+      ],
+      styles:{fontSize:10,cellPadding:3,font:"helvetica"},
+      headStyles:{fillColor:[30,30,50],textColor:220,fontStyle:"bold"},
+      alternateRowStyles:{fillColor:[245,248,255]},
+      columnStyles:{0:{cellWidth:10,halign:"center"},2:{halign:"right"},3:{halign:"right"},4:{halign:"right"}},
+      didParseCell:d=>{if(d.row.index===data.length){d.cell.styles.fontStyle="bold";d.cell.styles.fillColor=[220,235,255];}}
+    });
+  } else {
+    // Draw each description row using canvas for Thai support
+    const tableData=data.map((r,i)=>[
+      i+1, r.date, r.description, r.category,
+      fmt(r.amount), Number(r.deduct||0)>0?fmt(r.deduct):"-",
+      fmt(Number(r.amount)-Number(r.deduct||0))
+    ]);
+    tableData.push(["","","","TOTAL",fmt(tA),tD>0?fmt(tD):"-",fmt(tN)]);
+
+    doc.autoTable({
+      startY:32,
+      head:[["#","Date","Description","Category","Amount","Deduct","Net"]],
+      body:tableData,
+      styles:{fontSize:9,cellPadding:3,font:"helvetica",overflow:"ellipsize"},
+      headStyles:{fillColor:[30,30,50],textColor:220,fontStyle:"bold"},
+      alternateRowStyles:{fillColor:[248,250,255]},
+      columnStyles:{
+        0:{cellWidth:8,halign:"center"},
+        1:{cellWidth:18},
+        2:{cellWidth:90},
+        3:{cellWidth:28},
+        4:{cellWidth:30,halign:"right"},
+        5:{cellWidth:28,halign:"right"},
+        6:{cellWidth:28,halign:"right"},
+      },
+      didParseCell:d=>{
+        if(d.row.index===data.length){
+          d.cell.styles.fontStyle="bold";
+          d.cell.styles.fillColor=[220,235,255];
+          d.cell.styles.textColor=[0,0,0];
+        }
+      },
+      // Render Thai description column via canvas images
+      didDrawCell:async d=>{
+        if(d.column.index===2&&d.row.index<data.length){
+          // overwrite with canvas-rendered Thai text
+        }
+      }
+    });
+
+    // Footer
+    const pH=doc.internal.pageSize.height;
+    await drawText(`Net Total: ${fmt(tN)} THB   |   Items: ${data.length}`,12,pH-7,8,"#666666");
+  }
+  doc.save(`${title}.pdf`);
+}
+
+function App(){
+  const [rows,setRows]         = useState(()=>load(SK,defaultData));
+  const [nextId,setNextId]     = useState(()=>load(SI,12));
+  const [cats,setCats]         = useState(()=>load(SC,defaultCats));
+  const [salaries,setSalaries] = useState(()=>load(SS,[]));
+  const [tab,setTab]           = useState("expense");
+  const [view,setView]         = useState("summary");
+  const [showModal,setShowModal]       = useState(false);
+  const [showCatModal,setShowCatModal] = useState(false);
+  const [showSalModal,setShowSalModal] = useState(false);
+  const [editRow,setEditRow]   = useState(null);
+  const [editSal,setEditSal]   = useState(null);
+  const [form,setForm]         = useState({date:"1/1/69",amount:"",deduct:"",description:"",category:""});
+  const [salForm,setSalForm]   = useState({month:1,year:69,expected:"",paid:"",note:""});
+  const [deleteId,setDeleteId] = useState(null);
+  const [deleteSalId,setDeleteSalId] = useState(null);
+  const [catForm,setCatForm]   = useState({name:"",color:"#0a84ff"});
+  const [editCat,setEditCat]   = useState(null);
+  const [deleteCat,setDeleteCat] = useState(null);
+  const [toast,setToast]       = useState("");
+
+  useEffect(()=>save(SK,rows),[rows]);
+  useEffect(()=>save(SI,nextId),[nextId]);
+  useEffect(()=>save(SC,cats),[cats]);
+  useEffect(()=>save(SS,salaries),[salaries]);
+
+  const catMap=useMemo(()=>{const m={};cats.forEach(c=>m[c.name]=c.color);return m;},[cats]);
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(""),2200);};
+
+  const monthGroups=useMemo(()=>{
+    const map={};
+    rows.forEach(r=>{
+      const key=`${pm(r.date)}/${py(r.date)}`;
+      if(!map[key])map[key]={month:pm(r.date),year:py(r.date),key,rows:[]};
+      map[key].rows.push(r);
+    });
+    return Object.values(map).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
+  },[rows]);
+
+  const totalAmount=rows.reduce((s,r)=>s+Number(r.amount),0);
+  const totalDeduct=rows.reduce((s,r)=>s+Number(r.deduct||0),0);
+  const totalNet=totalAmount-totalDeduct;
+
+  const openAdd=()=>{setForm({date:"1/1/69",amount:"",deduct:"",description:"",category:cats[0]?.name||""});setEditRow(null);setShowModal(true);};
+  const openEdit=r=>{setForm({date:r.date,amount:r.amount,deduct:r.deduct||0,description:r.description,category:r.category});setEditRow(r.id);setShowModal(true);};
+  const saveForm=()=>{
+    if(!form.date||(!form.amount&&!form.deduct)||!form.description)return;
+    if(editRow!==null){setRows(p=>p.map(r=>r.id===editRow?{...r,...form,amount:Number(form.amount||0),deduct:Number(form.deduct||0)}:r));showToast("✓ Updated");}
+    else{setRows(p=>[...p,{id:nextId,...form,amount:Number(form.amount||0),deduct:Number(form.deduct||0)}]);setNextId(p=>p+1);showToast("✓ Added");}
+    setShowModal(false);
+  };
+
+  const openAddSal=()=>{setSalForm({month:1,year:69,expected:"",paid:"",note:""});setEditSal(null);setShowSalModal(true);};
+  const openEditSal=r=>{setSalForm({month:r.month,year:r.year,expected:r.expected,paid:r.paid,note:r.note||""});setEditSal(r.id);setShowSalModal(true);};
+  const saveSalForm=()=>{
+    if(!salForm.expected||!salForm.paid)return;
+    if(editSal!==null){setSalaries(p=>p.map(r=>r.id===editSal?{...r,...salForm,expected:Number(salForm.expected),paid:Number(salForm.paid)}:r));showToast("✓ Updated");}
+    else{setSalaries(p=>[...p,{id:Date.now(),...salForm,expected:Number(salForm.expected),paid:Number(salForm.paid)}]);showToast("✓ Salary added");}
+    setShowSalModal(false);
+  };
+
+  const openEditCat=i=>{setCatForm({name:cats[i].name,color:cats[i].color});setEditCat(i);};
+  const saveCat=()=>{
+    if(!catForm.name.trim())return;
+    if(editCat!==null){
+      const old=cats[editCat].name;
+      setCats(p=>p.map((c,idx)=>idx===editCat?{...catForm}:c));
+      setRows(p=>p.map(r=>r.category===old?{...r,category:catForm.name}:r));
+      showToast("✓ Category updated");
+    } else {
+      if(cats.find(c=>c.name===catForm.name.trim()))return;
+      setCats(p=>[...p,{name:catForm.name.trim(),color:catForm.color}]);
+      showToast("✓ Category added");
+    }
+    setEditCat(null);setCatForm({name:"",color:"#0a84ff"});
+  };
+
+  const currentMonthKey=view.startsWith("month:")?view.replace("month:",""):null;
+  const currentMonthGroup=currentMonthKey?monthGroups.find(g=>g.key===currentMonthKey):null;
+  const detailRows=currentMonthGroup?currentMonthGroup.rows:rows;
+
+  function CatBadge({name}){
+    const color=catMap[name]||"#636366";
+    return <span className="badge" style={{background:`${color}20`,color,border:`1px solid ${color}40`}}>{name}</span>;
+  }
+
+  function DateDropdown({value,onChange}){
+    const parts=(value||"1/1/69").split("/");
+    const dd=parts[0]||"1",mm=parts[1]||"1",yy=parts[2]||"69";
+    const set=(d,m,y)=>onChange(`${d}/${m}/${y}`);
+    return(
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:13,color:"var(--text2)",marginBottom:8,fontWeight:500}}>Date</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1.8fr 1.2fr",gap:8}}>
+          <select value={dd} onChange={e=>set(e.target.value,mm,yy)} className="ios-select">
+            {Array.from({length:31},(_,i)=><option key={i+1} value={i+1}>{i+1}</option>)}
+          </select>
+          <select value={mm} onChange={e=>set(dd,e.target.value,yy)} className="ios-select">
+            {MONTH_SHORT.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+          </select>
+          <select value={yy} onChange={e=>set(dd,mm,e.target.value)} className="ios-select">
+            {[{v:67,l:2024},{v:68,l:2025},{v:69,l:2026},{v:70,l:2027},{v:71,l:2028},{v:72,l:2029}].map(({v,l})=><option key={v} value={v}>{l}</option>)}
+          </select>
+        </div>
+      </div>
+    );
+  }
+
+  function RowTable({data,pdfTitle}){
+    const tA=data.reduce((s,r)=>s+Number(r.amount),0);
+    const tD=data.reduce((s,r)=>s+Number(r.deduct||0),0);
+    const tN=tA-tD;
+    return(
+      <div className="fade-up">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <div style={{fontSize:13,color:"var(--text2)",fontWeight:500}}>{data.length} records</div>
+          <button onClick={()=>exportPDF(data,pdfTitle)} className="btn-ios-sm" style={{background:"var(--bg3)",color:"var(--blue)"}}>
+            ↑ Export PDF
+          </button>
+        </div>
+        <div style={{background:"var(--bg2)",borderRadius:var(--r),overflow:"hidden",border:"0.5px solid var(--sep)"}}>
+          {/* Header */}
+          <div style={{display:"grid",gridTemplateColumns:"32px 70px 1fr 80px 76px 70px 70px 56px",padding:"10px 14px",background:"var(--bg3)",borderBottom:"0.5px solid var(--sep)"}}>
+            {["#","Date","Description","Category","Amount","Deduct","Net",""].map((h,i)=>(
+              <div key={i} style={{fontSize:11,fontWeight:600,color:"var(--text3)",textTransform:"uppercase",letterSpacing:0.5,textAlign:i>=4&&i<=6?"right":"left"}}>{h}</div>
+            ))}
+          </div>
+          {data.map((r,i)=>{
+            const net=Number(r.amount)-Number(r.deduct||0);
+            return(
+              <div key={r.id} className="row-item" style={{display:"grid",gridTemplateColumns:"32px 70px 1fr 80px 76px 70px 70px 56px",padding:"12px 14px",alignItems:"center",borderBottom:i<data.length-1?"0.5px solid var(--sep)":"none",minWidth:560}}>
+                <div style={{fontSize:11,color:"var(--text3)"}}>{i+1}</div>
+                <div style={{fontSize:12,color:"var(--text2)"}}>{r.date}</div>
+                <div style={{fontSize:13,color:"var(--text)",fontFamily:"'Sarabun','Inter',sans-serif"}}>{r.description}</div>
+                <div><CatBadge name={r.category}/></div>
+                <div style={{fontSize:13,fontWeight:600,textAlign:"right",color:"var(--text)"}}>฿{fmt(r.amount)}</div>
+                <div style={{fontSize:13,fontWeight:500,textAlign:"right",color:Number(r.deduct||0)>0?"var(--red)":"var(--text3)"}}>{Number(r.deduct||0)>0?`-฿${fmt(r.deduct)}`:"-"}</div>
+                <div style={{fontSize:13,fontWeight:600,textAlign:"right",color:"var(--green)"}}>฿{fmt(net)}</div>
+                <div style={{display:"flex",gap:4,justifyContent:"center"}}>
+                  <button className="tappable" onClick={()=>openEdit(r)} style={{background:"var(--bg3)",border:"none",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
+                  <button className="tappable" onClick={()=>setDeleteId(r.id)} style={{background:"rgba(255,69,58,0.1)",border:"none",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑</button>
+                </div>
+              </div>
+            );
+          })}
+          {/* Total */}
+          <div style={{display:"grid",gridTemplateColumns:"32px 70px 1fr 80px 76px 70px 70px 56px",padding:"12px 14px",background:"var(--bg3)",borderTop:"0.5px solid var(--sep)",minWidth:560}}>
+            <div/><div/><div style={{fontSize:12,fontWeight:600,color:"var(--text2)"}}>Total</div><div/>
+            <div style={{fontSize:14,fontWeight:700,textAlign:"right",color:"var(--text)"}}>฿{fmt(tA)}</div>
+            <div style={{fontSize:14,fontWeight:700,textAlign:"right",color:tD>0?"var(--red)":"var(--text3)"}}>{tD>0?`-฿${fmt(tD)}`:"-"}</div>
+            <div style={{fontSize:14,fontWeight:700,textAlign:"right",color:"var(--green)"}}>฿{fmt(tN)}</div>
+            <div/>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function SalaryView(){
+    const tE=salaries.reduce((s,r)=>s+Number(r.expected),0);
+    const tP=salaries.reduce((s,r)=>s+Number(r.paid),0);
+    const tD=tP-tE;
+    const sorted=[...salaries].sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
+    return(
+      <div className="fade-up">
+        {/* Summary strip */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,background:"var(--sep)",borderRadius:var(--r),overflow:"hidden",marginBottom:20}}>
+          {[
+            {label:"Expected",val:`฿${fmt(tE)}`,color:"var(--text)"},
+            {label:"Received",val:`฿${fmt(tP)}`,color:"var(--green)"},
+            {label:tD>=0?"Surplus":"Deficit",val:`${tD>=0?"+":""}฿${fmt(Math.abs(tD))}`,color:tD>=0?"var(--green)":"var(--red)"},
+          ].map((c,i)=>(
+            <div key={i} style={{background:"var(--bg2)",padding:"14px 12px"}}>
+              <div style={{fontSize:11,color:"var(--text3)",marginBottom:4,fontWeight:500}}>{c.label}</div>
+              <div style={{fontSize:18,fontWeight:700,color:c.color,letterSpacing:-0.3}}>{c.val}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+          <button onClick={()=>exportPDF(sorted,"Salary Summary",true)} className="btn-ios-sm" style={{background:"var(--bg3)",color:"var(--blue)"}}>
+            ↑ Export PDF
+          </button>
+        </div>
+
+        {sorted.length===0?(
+          <div style={{textAlign:"center",padding:"60px 20px"}}>
+            <div style={{fontSize:40,marginBottom:12}}>💰</div>
+            <div style={{color:"var(--text2)",fontSize:16,fontWeight:500}}>No salary records</div>
+            <div style={{color:"var(--text3)",fontSize:14,marginTop:4}}>Tap + Add to get started</div>
+          </div>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {sorted.map(r=>{
+              const diff=Number(r.paid)-Number(r.expected);
+              const pct=Number(r.expected)>0?Math.min(Math.round((Number(r.paid)/Number(r.expected))*100),100):0;
+              return(
+                <div key={r.id} style={{background:"var(--bg2)",borderRadius:var(--r),padding:"16px",border:"0.5px solid var(--sep)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                    <div style={{fontWeight:600,fontSize:16}}>{MONTH_FULL[r.month]} {r.year+1957}</div>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      <span className="badge" style={{background:diff>=0?"rgba(48,209,88,0.15)":"rgba(255,69,58,0.15)",color:diff>=0?"var(--green)":"var(--red)",border:"none",fontSize:12}}>
+                        {diff>=0?"+":""}{fmt(diff)}
+                      </span>
+                      <button className="tappable" onClick={()=>openEditSal(r)} style={{background:"var(--bg3)",border:"none",borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
+                      <button className="tappable" onClick={()=>setDeleteSalId(r.id)} style={{background:"rgba(255,69,58,0.1)",border:"none",borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑</button>
+                    </div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+                    <div style={{background:"var(--bg3)",borderRadius:var(--r3),padding:"10px 12px"}}>
+                      <div style={{fontSize:11,color:"var(--text3)",marginBottom:3}}>Expected</div>
+                      <div style={{fontWeight:700,fontSize:16,color:"var(--text)"}}>฿{fmt(r.expected)}</div>
+                    </div>
+                    <div style={{background:diff>=0?"rgba(48,209,88,0.08)":"rgba(255,69,58,0.08)",borderRadius:var(--r3),padding:"10px 12px"}}>
+                      <div style={{fontSize:11,color:"var(--text3)",marginBottom:3}}>Received</div>
+                      <div style={{fontWeight:700,fontSize:16,color:diff>=0?"var(--green)":"var(--red)"}}>฿{fmt(r.paid)}</div>
+                    </div>
+                  </div>
+                  <div className="progress-bar"><div className="progress-fill" style={{width:`${pct}%`,background:diff>=0?"var(--green)":"var(--red)"}}/></div>
+                  <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>
+                    <span style={{fontSize:11,color:"var(--text3)"}}>Paid {pct}%</span>
+                    <span style={{fontSize:11,color:diff>=0?"var(--green)":"var(--red)",fontWeight:500}}>
+                      {diff>=0?"Fully paid ✓":`Short ฿${fmt(Math.abs(diff))}`}
+                    </span>
+                  </div>
+                  {r.note&&<div style={{marginTop:10,fontSize:12,color:"var(--text2)",borderTop:"0.5px solid var(--sep)",paddingTop:8}}>📝 {r.note}</div>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ===== MODAL WRAPPER =====
+  function Modal({show,onClose,children}){
+    if(!show)return null;
+    return(
+      <div className="modal-overlay" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,backdropFilter:"blur(4px)"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+        <div className="modal-sheet" style={{background:"var(--bg2)",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto",paddingBottom:"env(safe-area-inset-bottom,20px)"}}>
+          {/* Drag handle */}
+          <div style={{display:"flex",justifyContent:"center",padding:"10px 0 0"}}>
+            <div style={{width:36,height:4,background:"var(--sep2)",borderRadius:2}}/>
+          </div>
+          <div style={{padding:"16px 20px 24px"}}>{children}</div>
+        </div>
+      </div>
+    );
+  }
+
+  function AlertModal({show,onClose,onConfirm,title,subtitle,icon}){
+    if(!show)return null;
+    return(
+      <div className="modal-overlay" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:20,backdropFilter:"blur(6px)"}}>
+        <div className="modal-sheet" style={{background:"var(--bg2)",borderRadius:var(--r),width:"100%",maxWidth:320,padding:24,textAlign:"center",border:"0.5px solid var(--sep2)"}}>
+          <div style={{fontSize:36,marginBottom:12}}>{icon}</div>
+          <div style={{fontWeight:700,fontSize:17,marginBottom:6}}>{title}</div>
+          <div style={{fontSize:14,color:"var(--text2)",marginBottom:20}}>{subtitle}</div>
+          <div style={{display:"flex",gap:10}}>
+            <button className="btn-ios" onClick={onClose} style={{background:"var(--bg3)",color:"var(--text)"}}>Cancel</button>
+            <button className="btn-ios" onClick={onConfirm} style={{background:"var(--red)",color:"#fff"}}>Delete</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return(
+    <div style={{minHeight:"100vh",paddingBottom:40}}>
+
+      {/* Toast */}
+      {toast&&(
+        <div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",background:"rgba(40,40,45,0.95)",color:"var(--text)",borderRadius:20,padding:"10px 20px",fontSize:14,fontWeight:500,zIndex:999,backdropFilter:"blur(20px)",border:"0.5px solid var(--sep2)",animation:"toastIn 0.3s ease",whiteSpace:"nowrap"}}>
+          {toast}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{padding:"56px 20px 0",background:"var(--bg)"}}>
+        <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:20}}>
+          <div>
+            <div style={{fontSize:28,fontWeight:700,letterSpacing:-0.5}}>
+              {tab==="expense"
+                ? (view==="summary"?"Overview": view==="all"?"All Expenses": `${MONTH_FULL[currentMonthGroup?.month||1]}`)
+                : "Salary"}
+            </div>
+            {tab==="expense"&&view==="summary"&&<div style={{fontSize:13,color:"var(--text3)",marginTop:2}}>Finance Tracker</div>}
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            {tab==="expense"&&view==="summary"&&(
+              <button className="tappable" onClick={()=>setShowCatModal(true)} style={{background:"var(--bg3)",border:"none",borderRadius:20,padding:"7px 14px",color:"var(--text2)",fontSize:13,fontWeight:500,cursor:"pointer"}}>
+                Categories
+              </button>
+            )}
+            {tab==="expense"&&view!=="summary"&&(
+              <button className="tappable" onClick={()=>setView("summary")} style={{background:"var(--bg3)",border:"none",borderRadius:20,padding:"7px 14px",color:"var(--blue)",fontSize:13,fontWeight:500,cursor:"pointer"}}>
+                ← Back
+              </button>
+            )}
+            <button className="tappable" onClick={tab==="expense"?openAdd:openAddSal} style={{background:"var(--blue)",border:"none",borderRadius:20,padding:"7px 16px",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+              + Add
+            </button>
+          </div>
+        </div>
+
+        {/* Segmented control */}
+        <div className="seg-control" style={{marginBottom:20}}>
+          {[{id:"expense",label:"Expenses"},{id:"salary",label:"Salary"}].map(t=>(
+            <button key={t.id} className={`seg-btn${tab===t.id?" active":""}`} onClick={()=>{setTab(t.id);setView("summary");}}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{padding:"0 16px"}}>
+
+        {/* EXPENSE TAB */}
+        {tab==="expense"&&(<>
+          {view==="summary"&&(
+            <div className="fade-up">
+              {/* Big number card */}
+              <div style={{background:"var(--bg2)",borderRadius:var(--r),padding:"20px",marginBottom:12,border:"0.5px solid var(--sep)"}}>
+                <div className="sum-label">Net Total</div>
+                <div className="sum-num" style={{color:"var(--green)"}}>฿{fmt(totalNet)}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:16,paddingTop:16,borderTop:"0.5px solid var(--sep)"}}>
+                  <div>
+                    <div style={{fontSize:11,color:"var(--text3)",marginBottom:3}}>Amount</div>
+                    <div style={{fontSize:17,fontWeight:600,color:"var(--text)"}}>฿{fmt(totalAmount)}</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:11,color:"var(--text3)",marginBottom:3}}>Deduction</div>
+                    <div style={{fontSize:17,fontWeight:600,color:totalDeduct>0?"var(--red)":"var(--text3)"}}>{totalDeduct>0?`-฿${fmt(totalDeduct)}`:"-"}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Month cards */}
+              <div style={{fontSize:13,fontWeight:600,color:"var(--text2)",marginBottom:10,letterSpacing:0.3,textTransform:"uppercase",fontSize:11}}>Monthly</div>
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
+                {monthGroups.map(g=>{
+                  const tA=g.rows.reduce((s,r)=>s+Number(r.amount),0);
+                  const tD=g.rows.reduce((s,r)=>s+Number(r.deduct||0),0);
+                  const tN=tA-tD;
+                  return(
+                    <div key={g.key} className="month-card" onClick={()=>setView(`month:${g.key}`)} style={{padding:"16px",border:"0.5px solid var(--sep)"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                        <div style={{fontWeight:600,fontSize:16}}>{MONTH_FULL[g.month]} {g.year+1957}</div>
+                        <span className="badge" style={{background:"var(--bg3)",color:"var(--text2)",border:"none"}}>{g.rows.length} items</span>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                        <div><div style={{fontSize:10,color:"var(--text3)",marginBottom:2}}>Amount</div><div style={{fontWeight:600,fontSize:14}}>฿{fmt(tA)}</div></div>
+                        <div><div style={{fontSize:10,color:"var(--text3)",marginBottom:2}}>Deduct</div><div style={{fontWeight:600,fontSize:14,color:tD>0?"var(--red)":"var(--text3)"}}>{tD>0?`฿${fmt(tD)}`:"-"}</div></div>
+                        <div><div style={{fontSize:10,color:"var(--text3)",marginBottom:2}}>Net</div><div style={{fontWeight:600,fontSize:14,color:"var(--green)"}}>฿{fmt(tN)}</div></div>
+                      </div>
+                      <div style={{marginTop:10,fontSize:12,color:"var(--blue)",textAlign:"right"}}>View →</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button className="tappable" onClick={()=>setView("all")} style={{width:"100%",background:"var(--bg2)",border:"0.5px solid var(--sep)",borderRadius:var(--r),padding:"14px",fontSize:14,color:"var(--blue)",cursor:"pointer",fontWeight:500}}>
+                View all {rows.length} records
+              </button>
+            </div>
+          )}
+          {(view.startsWith("month:")||view==="all")&&(
+            <RowTable data={view==="all"?rows:detailRows} pdfTitle={view==="all"?"All Expenses":`Expenses ${MONTH_FULL[currentMonthGroup?.month||1]} ${(currentMonthGroup?.year||69)+1957}`}/>
+          )}
+        </>)}
+
+        {/* SALARY TAB */}
+        {tab==="salary"&&<SalaryView/>}
+      </div>
+
+      {/* ===== EXPENSE MODAL ===== */}
+      <Modal show={showModal} onClose={()=>setShowModal(false)}>
+        <div style={{fontWeight:700,fontSize:20,marginBottom:20}}>{editRow?"Edit Record":"New Record"}</div>
+        <DateDropdown value={form.date} onChange={v=>setForm({...form,date:v})}/>
+        {[{label:"Amount (THB)",key:"amount",type:"number",placeholder:"0.00"},{label:"Deduction (THB)",key:"deduct",type:"number",placeholder:"0.00"},{label:"Description",key:"description",type:"text",placeholder:"Details..."}].map(f=>(
+          <div key={f.key} style={{marginBottom:14}}>
+            <div style={{fontSize:13,color:f.key==="deduct"?"var(--red)":"var(--text2)",marginBottom:8,fontWeight:500}}>{f.label}</div>
+            <input type={f.type} value={form[f.key]} placeholder={f.placeholder} onChange={e=>setForm({...form,[f.key]:e.target.value})} className="ios-input" style={{fontFamily:f.key==="description"?"'Sarabun','Inter',sans-serif":"inherit"}}/>
+          </div>
+        ))}
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:13,color:"var(--text2)",marginBottom:8,fontWeight:500}}>Category</div>
+          <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="ios-select">
+            {cats.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
+          </select>
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <button className="btn-ios" onClick={()=>setShowModal(false)} style={{background:"var(--bg3)",color:"var(--text)"}}>Cancel</button>
+          <button className="btn-ios" onClick={saveForm} style={{background:"var(--blue)",color:"#fff"}}>{editRow?"Save":"Add"}</button>
+        </div>
+      </Modal>
+
+      {/* ===== SALARY MODAL ===== */}
+      <Modal show={showSalModal} onClose={()=>setShowSalModal(false)}>
+        <div style={{fontWeight:700,fontSize:20,marginBottom:20}}>{editSal?"Edit Salary":"Add Salary"}</div>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:13,color:"var(--text2)",marginBottom:8,fontWeight:500}}>Month / Year</div>
+          <div style={{display:"grid",gridTemplateColumns:"1.8fr 1fr",gap:8}}>
+            <select value={salForm.month} onChange={e=>setSalForm({...salForm,month:parseInt(e.target.value)})} className="ios-select">
+              {MONTH_FULL.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+            </select>
+            <select value={salForm.year} onChange={e=>setSalForm({...salForm,year:parseInt(e.target.value)})} className="ios-select">
+              {[{v:67,l:2024},{v:68,l:2025},{v:69,l:2026},{v:70,l:2027},{v:71,l:2028},{v:72,l:2029}].map(({v,l})=><option key={v} value={v}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+        {[{label:"Expected (THB)",key:"expected",color:"var(--text2)"},{label:"Received (THB)",key:"paid",color:"var(--green)"},{label:"Note (optional)",key:"note",color:"var(--text2)"}].map(f=>(
+          <div key={f.key} style={{marginBottom:14}}>
+            <div style={{fontSize:13,color:f.color,marginBottom:8,fontWeight:500}}>{f.label}</div>
+            <input type={f.key==="note"?"text":"number"} value={salForm[f.key]} placeholder={f.key==="note"?"e.g. Partial payment":"0.00"} onChange={e=>setSalForm({...salForm,[f.key]:e.target.value})} className="ios-input"/>
+          </div>
+        ))}
+        {salForm.expected&&salForm.paid&&(()=>{
+          const diff=Number(salForm.paid)-Number(salForm.expected);
+          return <div style={{background:diff>=0?"rgba(48,209,88,0.1)":"rgba(255,69,58,0.1)",borderRadius:var(--r3),padding:"10px 14px",marginBottom:16}}>
+            <span style={{fontSize:13,color:"var(--text2)"}}>Difference: </span>
+            <span style={{fontSize:14,fontWeight:700,color:diff>=0?"var(--green)":"var(--red)"}}>{diff>=0?"+":""}{fmt(diff)} THB</span>
+          </div>;
+        })()}
+        <div style={{display:"flex",gap:10}}>
+          <button className="btn-ios" onClick={()=>setShowSalModal(false)} style={{background:"var(--bg3)",color:"var(--text)"}}>Cancel</button>
+          <button className="btn-ios" onClick={saveSalForm} style={{background:"var(--green)",color:"#000",fontWeight:700}}>{editSal?"Save":"Add"}</button>
+        </div>
+      </Modal>
+
+      {/* ===== CATEGORY MODAL ===== */}
+      <Modal show={showCatModal} onClose={()=>{setShowCatModal(false);setEditCat(null);setCatForm({name:"",color:"#0a84ff"});}}>
+        <div style={{fontWeight:700,fontSize:20,marginBottom:16}}>Categories</div>
+        {/* Add/Edit form */}
+        <div style={{background:"var(--bg3)",borderRadius:var(--r2),padding:14,marginBottom:16}}>
+          <div style={{fontSize:12,color:"var(--text3)",marginBottom:10,fontWeight:500}}>{editCat!==null?"EDIT CATEGORY":"NEW CATEGORY"}</div>
+          <input value={catForm.name} placeholder="Category name" onChange={e=>setCatForm({...catForm,name:e.target.value})} className="ios-input" style={{marginBottom:12}}/>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+            {PRESET_COLORS.map(c=>(
+              <button key={c} onClick={()=>setCatForm({...catForm,color:c})} style={{width:30,height:30,borderRadius:"50%",background:c,border:catForm.color===c?"3px solid #fff":"2px solid transparent",cursor:"pointer",transition:"transform 0.15s",transform:catForm.color===c?"scale(1.2)":"scale(1)"}}/>
+            ))}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+            <span style={{fontSize:12,color:"var(--text3)"}}>Preview</span>
+            <span className="badge" style={{background:`${catForm.color}20`,color:catForm.color,border:`1px solid ${catForm.color}40`}}>{catForm.name||"Category"}</span>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            {editCat!==null&&<button className="btn-ios-sm" onClick={()=>{setEditCat(null);setCatForm({name:"",color:"#0a84ff"});}} style={{background:"var(--bg2)",color:"var(--text2)"}}>Cancel</button>}
+            <button className="btn-ios-sm" onClick={saveCat} style={{background:"var(--blue)",color:"#fff",flex:1}}>{editCat!==null?"Save Changes":"Add Category"}</button>
+          </div>
+        </div>
+        {/* List */}
+        <div className="ios-list">
+          {cats.map((c,idx)=>(
+            <div key={idx} className="ios-row" style={{justifyContent:"space-between"}}>
+              <span className="badge" style={{background:`${c.color}20`,color:c.color,border:`1px solid ${c.color}40`}}>{c.name}</span>
+              <div style={{display:"flex",gap:6}}>
+                <button className="tappable" onClick={()=>openEditCat(idx)} style={{background:"var(--bg3)",border:"none",borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
+                <button className="tappable" onClick={()=>setDeleteCat(idx)} style={{background:"rgba(255,69,58,0.1)",border:"none",borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Modal>
+
+      {/* Alert Modals */}
+      <AlertModal show={deleteId!==null} onClose={()=>setDeleteId(null)} onConfirm={()=>{setRows(p=>p.filter(r=>r.id!==deleteId));setDeleteId(null);showToast("Deleted");}} title="Delete record?" subtitle="This cannot be undone." icon="🗑️"/>
+      <AlertModal show={deleteSalId!==null} onClose={()=>setDeleteSalId(null)} onConfirm={()=>{setSalaries(p=>p.filter(r=>r.id!==deleteSalId));setDeleteSalId(null);showToast("Deleted");}} title="Delete salary record?" subtitle="This cannot be undone." icon="💰"/>
+      <AlertModal show={deleteCat!==null} onClose={()=>setDeleteCat(null)} onConfirm={()=>{setCats(p=>p.filter((_,i)=>i!==deleteCat));setDeleteCat(null);showToast("Category deleted");}} title={`Delete "${cats[deleteCat]?.name}"?`} subtitle="Records using this category will remain." icon="🏷️"/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
